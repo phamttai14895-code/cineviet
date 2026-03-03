@@ -7,7 +7,7 @@ import { useToast } from '../../context/ToastContext';
 
 const TYPE_LABELS = { movie: 'Phim lẻ', series: 'Phim bộ', anime: 'Anime' };
 const STATUS_LABELS = { published: 'Hiển thị', pending: 'Chờ duyệt' };
-const SOURCE_LABELS = { ophim: 'Ophim', phimapi: 'KKPhim', nguonc: 'Nguonc' };
+const SOURCE_LABELS = { phimapi: 'KKPhim' };
 const POSTER_PLACEHOLDER = NO_POSTER_DATA_URL;
 
 function formatViews(n) {

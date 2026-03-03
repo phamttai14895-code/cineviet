@@ -32,6 +32,9 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
+// Health check — đăng ký sớm để không bị middleware /api chặn (proxy/load balancer hay gọi)
+app.get('/api/health', (req, res) => res.json({ ok: true }));
+
 // Maintenance mode: trả 503 trừ health, settings, auth (để đăng nhập), admin (để tắt bảo trì)
 app.use('/api', (req, res, next) => {
   if (req.path === '/health' || req.path === '/settings') return next();
@@ -93,8 +96,6 @@ app.use('/api/crawl', crawlRoutes);
 app.use('/api/actors', actorsRoutes);
 app.use('/api/image', imageRoutes);
 app.use('/api/home', homeRoutes);
-
-app.get('/api/health', (req, res) => res.json({ ok: true }));
 
 const AD_ZONES_PUBLIC = ['popup', 'footer_banner', 'below_featured', 'sidebar_left', 'sidebar_right'];
 const ADS_DIR = path.resolve(__dirname, '../uploads/ads');
@@ -178,7 +179,7 @@ const io = new Server(server, {
 });
 registerWatchParty(io);
 
-server.listen(PORT, () => {
-  console.log(`Backend running at http://localhost:${PORT}`);
+server.listen(PORT, '0.0.0.0', () => {
+  console.log(`Backend running at http://0.0.0.0:${PORT}`);
   if (typeof startAutoCrawlTimer === 'function') startAutoCrawlTimer();
 });

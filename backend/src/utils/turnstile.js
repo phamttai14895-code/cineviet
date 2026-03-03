@@ -16,7 +16,12 @@ export async function verifyTurnstile(token, remoteip = null) {
       body: body.toString(),
     });
     const data = await res.json();
-    return data?.success === true;
+    if (data?.success === true) return true;
+    // Log lý do thất bại (Cloudflare trả về error-codes) để debug
+    if (process.env.NODE_ENV !== 'production' || data?.success === false) {
+      console.warn('[Turnstile] verify failed:', data?.['error-codes'] || data?.message || data);
+    }
+    return false;
   } catch (err) {
     console.error('[Turnstile] verify error:', err?.message);
     return false;

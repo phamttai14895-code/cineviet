@@ -56,7 +56,9 @@ export default function AdminSettings() {
   const [siteDescription, setSiteDescription] = useState('Trang xem phim online chất lượng cao');
   const [moviesPerPage, setMoviesPerPage] = useState(20);
   const [ga4MeasurementId, setGa4MeasurementId] = useState('');
+  const [gtmContainerId, setGtmContainerId] = useState('');
   const [savingGa4, setSavingGa4] = useState(false);
+  const [savingGtm, setSavingGtm] = useState(false);
   const [watchNotice, setWatchNotice] = useState('');
   const [socialFacebook, setSocialFacebook] = useState('');
   const [socialTelegram, setSocialTelegram] = useState('');
@@ -82,6 +84,7 @@ export default function AdminSettings() {
         setSiteDescription(d.site_description || '');
         setMoviesPerPage(d.movies_per_page ?? 20);
         setGa4MeasurementId(d.ga4_measurement_id || '');
+        setGtmContainerId(d.gtm_container_id || '');
         setWatchNotice(d.watch_notice ?? '');
         setSocialFacebook(d.social_facebook ?? '');
         setSocialTelegram(d.social_telegram ?? '');
@@ -138,6 +141,19 @@ export default function AdminSettings() {
       toast.error(e.response?.data?.error || 'Lưu thất bại');
     } finally {
       setSavingGa4(false);
+    }
+  };
+
+  const saveGtm = async () => {
+    setSavingGtm(true);
+    try {
+      await admin.updateSettings({ gtm_container_id: gtmContainerId.trim() });
+      load();
+      toast.success('Đã lưu Google Tag Manager.');
+    } catch (e) {
+      toast.error(e.response?.data?.error || 'Lưu thất bại');
+    } finally {
+      setSavingGtm(false);
     }
   };
 
@@ -261,8 +277,37 @@ export default function AdminSettings() {
 
         <div className="admin-settings-card">
           <div className="admin-settings-card-head">
+            <span className="admin-settings-card-icon"><i className="fas fa-tags" /></span>
+            <h2>Google Tag Manager</h2>
+          </div>
+          <div className="admin-settings-fields">
+            <label className="admin-settings-label">CONTAINER ID (GTM-XXXXXXX)</label>
+            <input
+              type="text"
+              className="admin-settings-input"
+              value={gtmContainerId}
+              onChange={(e) => setGtmContainerId(e.target.value)}
+              placeholder="GTM-5RB3PNC4"
+            />
+            <p className="admin-settings-hint">
+              Điền Container ID từ Google Tag Manager. Mã GTM sẽ được chèn vào &lt;head&gt; (cao nhất) và ngay sau &lt;body&gt; (noscript). Để trống để tắt.
+            </p>
+            <button
+              type="button"
+              className="admin-settings-save-btn"
+              onClick={saveGtm}
+              disabled={savingGtm}
+            >
+              <i className="fas fa-save admin-settings-btn-icon" />
+              <span>{savingGtm ? 'Đang lưu...' : 'Lưu'}</span>
+            </button>
+          </div>
+        </div>
+
+        <div className="admin-settings-card">
+          <div className="admin-settings-card-head">
             <span className="admin-settings-card-icon"><i className="fas fa-chart-line" /></span>
-            <h2>Google Analytics 4</h2>
+            <h2>Google Analytics 4 (Measurement ID)</h2>
           </div>
           <div className="admin-settings-fields">
             <label className="admin-settings-label">MEASUREMENT ID (G-XXXXXXXXXX)</label>
@@ -274,7 +319,7 @@ export default function AdminSettings() {
               placeholder="G-XXXXXXXXXX"
             />
             <p className="admin-settings-hint">
-              Điền Measurement ID từ Google Analytics 4 để theo dõi truy cập. Để trống để tắt. Không cần sửa code.
+              Tùy chọn: dùng nếu không dùng GTM hoặc cần gửi pageview trực tiếp. Để trống để tắt.
             </p>
             <button
               type="button"

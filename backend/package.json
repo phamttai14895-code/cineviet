@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
+    "build": "echo Backend ready - no build step required",
     "dev": "node --watch src/index.js",
     "start": "node src/index.js",
     "db:init": "node scripts/initDb.js",

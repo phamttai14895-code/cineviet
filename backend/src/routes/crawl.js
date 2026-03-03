@@ -1,5 +1,5 @@
 /**
- * API crawl 3 nguồn phim (Ophim, KKPhim, Nguonc): lấy chi tiết phim đã merge, trang chủ, tìm kiếm.
+ * API crawl nguồn KKPhim (PhimAPI): lấy chi tiết phim, trang chủ, tìm kiếm.
  * Import vào DB qua POST /api/admin/crawl/import (cần đăng nhập admin).
  */
 
@@ -16,7 +16,7 @@ import db from '../config/db.js';
 
 const router = Router();
 
-/** GET /api/crawl/movie?slug=xxx - Chi tiết phim đã merge từ 3 nguồn (dùng cho trang xem phim) */
+/** GET /api/crawl/movie?slug=xxx - Chi tiết phim từ KKPhim (dùng cho trang xem phim) */
 router.get('/movie', async (req, res) => {
   const slug = (req.query.slug || '').trim();
   if (!slug) {
@@ -34,7 +34,7 @@ router.get('/movie', async (req, res) => {
   }
 });
 
-/** GET /api/crawl/home?source=ophim|phimapi|nguonc&page=1 (mặc định phimapi/KKPhim) */
+/** GET /api/crawl/home?source=phimapi&page=1 */
 router.get('/home', async (req, res) => {
   const source = (req.query.source || 'phimapi').toLowerCase();
   const page = Math.max(1, parseInt(req.query.page, 10) || 1);
@@ -47,7 +47,7 @@ router.get('/home', async (req, res) => {
   }
 });
 
-/** GET /api/crawl/search?keyword=xxx&source=ophim|phimapi|nguonc&page=1 (mặc định phimapi/KKPhim) */
+/** GET /api/crawl/search?keyword=xxx&source=phimapi&page=1 */
 router.get('/search', async (req, res) => {
   const keyword = (req.query.keyword || '').trim();
   const source = (req.query.source || 'phimapi').toLowerCase();
@@ -61,7 +61,7 @@ router.get('/search', async (req, res) => {
   }
 });
 
-/** GET /api/crawl/genres - Thể loại (Ophim) */
+/** GET /api/crawl/genres - Thể loại (KKPhim/PhimAPI) */
 router.get('/genres', async (req, res) => {
   try {
     const items = await getGenres();
@@ -72,7 +72,7 @@ router.get('/genres', async (req, res) => {
   }
 });
 
-/** GET /api/crawl/countries - Quốc gia (Ophim) */
+/** GET /api/crawl/countries - Quốc gia (KKPhim/PhimAPI) */
 router.get('/countries', async (req, res) => {
   try {
     const items = await getCountries();
@@ -83,7 +83,7 @@ router.get('/countries', async (req, res) => {
   }
 });
 
-/** GET /api/crawl/years - Năm phát hành (Ophim) */
+/** GET /api/crawl/years - Năm phát hành (danh sách sinh từ năm hiện tại) */
 router.get('/years', async (req, res) => {
   try {
     const items = await getYears();

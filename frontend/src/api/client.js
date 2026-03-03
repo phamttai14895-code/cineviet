@@ -138,7 +138,7 @@ export const admin = {
   logs: (params) => client.get('/admin/logs', { params }),
   crawlLogs: (params) => client.get('/admin/crawl/logs', { params }),
   realtime: () => client.get('/admin/realtime'),
-  crawlRun: (body) => client.post('/admin/crawl/run', body),
+  crawlRun: (body) => client.post('/admin/crawl/run', body, { timeout: 600000 }),
   crawlAutoSettings: () => client.get('/admin/crawl/auto-settings'),
   crawlAutoSettingsUpdate: (body) => client.put('/admin/crawl/auto-settings', body),
 };

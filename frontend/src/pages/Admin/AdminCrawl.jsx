@@ -2,11 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { admin, crawl } from '../../api/client';
 import { useToast } from '../../context/ToastContext';
 
-const SOURCES = [
-  { id: 'ophim', label: 'Ophim' },
-  { id: 'phimapi', label: 'KKPhim' },
-  { id: 'nguonc', label: 'Nguonc' },
-];
+const SOURCES = [{ id: 'phimapi', label: 'KKPhim' }];
 
 const INTERVAL_OPTIONS = [
   { value: 15, label: '15 phút' },
@@ -17,7 +13,7 @@ const INTERVAL_OPTIONS = [
 
 export default function AdminCrawl() {
   const { toast } = useToast();
-  const [sources, setSources] = useState(['ophim', 'phimapi', 'nguonc']);
+  const [sources, setSources] = useState(['phimapi']);
   const [pageFrom, setPageFrom] = useState(1);
   const [pageTo, setPageTo] = useState(3);
   const [category, setCategory] = useState('');
@@ -30,7 +26,7 @@ export default function AdminCrawl() {
   const [autoSettings, setAutoSettings] = useState({
     enabled: false,
     interval_minutes: 30,
-    sources: ['ophim', 'phimapi', 'nguonc'],
+    sources: ['phimapi'],
     page_from: 1,
     page_to: 2,
     category: '',

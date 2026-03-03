@@ -1031,7 +1031,7 @@ async function importMovieBySlug(slug) {
   const totalEpisodes = parseInt(crawled.total_episodes, 10) || 0;
   const episodeCurrent = crawled.episode_current != null ? Math.max(0, parseInt(crawled.episode_current, 10) || 0) : null;
   const duration = crawled.duration != null ? Math.max(0, parseInt(crawled.duration, 10) || 0) : 0;
-  const source = (crawled.source === 'ophim' || crawled.source === 'phimapi' || crawled.source === 'nguonc') ? crawled.source : null;
+  const source = (crawled.source === 'phimapi') ? crawled.source : null;
   const chieuRapVal = crawled.chieu_rap ?? crawled.chieuRap ?? crawled.chieurap;
   const chieuRap = (chieuRapVal === true || chieuRapVal === 1 || String(chieuRapVal).toLowerCase().trim() === 'true' || String(chieuRapVal).trim() === '1') ? 1 : 0;
   const thuyetMinh = (crawled.thuyet_minh === true || crawled.thuyet_minh === 1) ? 1 : 0;
@@ -1066,7 +1066,7 @@ async function importMovieBySlug(slug) {
   return { ok: true, created: true, movieId: r.lastInsertRowid };
 }
 
-// Crawl import: lấy phim từ 3 nguồn (Ophim, KKPhim, Nguonc) rồi ghi vào DB
+// Crawl import: lấy phim từ nguồn KKPhim (PhimAPI) rồi ghi vào DB
 router.post('/crawl/import', async (req, res) => {
   const slug = (req.body.slug || (req.query.slug || '').trim()).trim();
   if (!slug) {
@@ -1095,7 +1095,7 @@ router.post('/crawl/import', async (req, res) => {
 
 // Chạy crawl theo trang + lọc thể loại/quốc gia (3 nguồn)
 const CRAWL_MAX_PAGES = 20;
-const SOURCES = ['ophim', 'phimapi', 'nguonc'];
+const SOURCES = ['phimapi'];
 
 function getCrawlAutoSettings() {
   const rows = db.prepare("SELECT key, value FROM settings WHERE key LIKE 'crawl_%'").all();
@@ -1409,6 +1409,7 @@ router.put('/settings', (req, res) => {
     allow_register: (body.allow_register === true || body.allow_register === '1') ? '1' : (body.allow_register === false || body.allow_register === '0' ? '0' : current.allow_register),
     maintenance_mode: (body.maintenance_mode === true || body.maintenance_mode === '1') ? '1' : (body.maintenance_mode === false || body.maintenance_mode === '0' ? '0' : current.maintenance_mode),
     ga4_measurement_id: body.ga4_measurement_id !== undefined ? String(body.ga4_measurement_id).trim() : (current.ga4_measurement_id || ''),
+    gtm_container_id: body.gtm_container_id !== undefined ? String(body.gtm_container_id).trim() : (current.gtm_container_id || ''),
     social_facebook: body.social_facebook !== undefined ? String(body.social_facebook).trim() : (current.social_facebook || ''),
     social_telegram: body.social_telegram !== undefined ? String(body.social_telegram).trim() : (current.social_telegram || ''),
     social_email: body.social_email !== undefined ? String(body.social_email).trim() : (current.social_email || ''),

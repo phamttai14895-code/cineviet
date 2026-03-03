@@ -8,6 +8,7 @@ import { WebSiteJsonLd } from './JsonLd';
 import Breadcrumb from './Breadcrumb';
 import AdZones from './AdZones';
 import GoogleAnalytics4 from './GoogleAnalytics4';
+import GoogleTagManager from './GoogleTagManager';
 import ProtectionGuard from './ProtectionGuard';
 import { PublicSettingsProvider } from '../context/PublicSettingsContext';
 import { useToast } from '../context/ToastContext';
@@ -28,6 +29,7 @@ export default function Layout() {
 
   return (
     <PublicSettingsProvider>
+      <GoogleTagManager />
       <GoogleAnalytics4 />
       <ProtectionGuard />
       <div className="layout">
