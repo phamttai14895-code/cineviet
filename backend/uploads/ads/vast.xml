@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VAST version="2.0">
+  <Ad id="preroll-example">
+    <InLine>
+      <AdSystem>CineViet</AdSystem>
+      <AdTitle>Quảng cáo thử nghiệm</AdTitle>
+      <Description>Pre-roll test - có thể bỏ qua sau vài giây</Description>
+      <Impression><![CDATA[https://example.com/impression?ad=preroll]]></Impression>
+      <Creatives>
+        <Creative id="linear-1">
+          <Linear>
+            <Duration>00:00:15</Duration>
+            <TrackingEvents>
+              <Tracking event="start"><![CDATA[https://example.com/track/start]]></Tracking>
+              <Tracking event="firstQuartile"><![CDATA[https://example.com/track/firstQuartile]]></Tracking>
+              <Tracking event="midpoint"><![CDATA[https://example.com/track/midpoint]]></Tracking>
+              <Tracking event="thirdQuartile"><![CDATA[https://example.com/track/thirdQuartile]]></Tracking>
+              <Tracking event="complete"><![CDATA[https://example.com/track/complete]]></Tracking>
+            </TrackingEvents>
+            <VideoClicks>
+              <ClickThrough><![CDATA[https://example.com/clickthrough]]></ClickThrough>
+            </VideoClicks>
+            <MediaFiles>
+              <MediaFile delivery="progressive" type="video/mp4" width="1280" height="720">
+                <![CDATA[https://bf.333xbet.com/18881999/video888.mp4]]>
+              </MediaFile>
+            </MediaFiles>
+          </Linear>
+        </Creative>
+      </Creatives>
+    </InLine>
+  </Ad>
+</VAST>

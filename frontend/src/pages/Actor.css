@@ -1,0 +1,436 @@
+/* Trang chi tiết diễn viên — đồng bộ design system (theme tối/sáng) */
+.actor-detail-page {
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  padding-top: 58px;
+}
+
+.actor-detail-page .actor-detail-loading,
+.actor-detail-page .actor-detail-error {
+  padding: var(--space-3xl) var(--space-xl);
+  text-align: center;
+  color: var(--muted);
+}
+
+.actor-detail-page .actor-detail-error {
+  color: var(--red);
+}
+
+.actor-detail-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius);
+  background: var(--card);
+  border: 1px solid var(--border);
+  color: var(--text-soft);
+  text-decoration: none;
+  font-size: 0.875rem;
+  cursor: pointer;
+  font-family: var(--font);
+  transition: color var(--transition-fast), border-color var(--transition-fast), background var(--transition-fast);
+}
+
+.actor-detail-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+
+/* Layout: sidebar + main */
+.actor-detail-layout {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: var(--space-xl) var(--space-lg) var(--space-3xl);
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: var(--space-3xl);
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .actor-detail-layout {
+    grid-template-columns: 1fr;
+    gap: var(--space-xl);
+  }
+}
+
+.actor-detail-sidebar {
+  position: sticky;
+  top: 74px;
+}
+
+.actor-detail-avatar-wrap {
+  width: 220px;
+  height: 220px;
+  border-radius: 50%;
+  overflow: hidden;
+  margin: 0 auto var(--space-lg);
+  background: var(--bg3);
+  border: 3px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.actor-detail-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.actor-detail-avatar-ph {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 4rem;
+  font-weight: 700;
+  color: var(--muted);
+  background: linear-gradient(135deg, var(--border-light), var(--bg2));
+}
+
+.actor-detail-name {
+  font-size: 1.75rem;
+  font-weight: 700;
+  text-align: center;
+  margin: 0 0 var(--space-md);
+  line-height: 1.2;
+  color: var(--text);
+}
+
+.actor-detail-actions {
+  display: flex;
+  gap: var(--space-sm);
+  justify-content: center;
+  margin-bottom: var(--space-lg);
+}
+
+.actor-detail-btn-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.9rem;
+  border-radius: var(--radius-full);
+  background: var(--card);
+  border: 1px solid var(--border);
+  color: var(--text-soft);
+  font-size: 0.8rem;
+  cursor: pointer;
+  font-family: var(--font);
+  transition: color var(--transition-fast), border-color var(--transition-fast), background var(--transition-fast);
+}
+
+.actor-detail-btn-pill:hover {
+  background: var(--bg3);
+  color: var(--text);
+  border-color: var(--border-light);
+}
+
+.actor-detail-meta {
+  border-top: 1px solid var(--border);
+  padding-top: var(--space-md);
+}
+
+.actor-detail-meta-row {
+  margin-bottom: 0.85rem;
+}
+
+.actor-detail-meta-label {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--muted);
+  margin-bottom: 0.2rem;
+}
+
+.actor-detail-meta-value {
+  font-size: 0.875rem;
+  color: var(--text-soft);
+  line-height: 1.4;
+}
+
+.actor-detail-meta-value.actor-detail-bio {
+  white-space: pre-line;
+  display: block;
+}
+
+/* Main: Các phim đã tham gia */
+.actor-detail-main {
+  min-width: 0;
+}
+
+.actor-detail-section-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0 0 var(--space-md);
+  color: var(--text);
+}
+
+.actor-detail-filters {
+  display: flex;
+  gap: 0.35rem;
+  margin-bottom: var(--space-lg);
+}
+
+.actor-detail-filter {
+  padding: 0.4rem 1rem;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-soft);
+  font-size: 0.85rem;
+  cursor: pointer;
+  font-family: var(--font);
+  transition: color var(--transition-fast), border-color var(--transition-fast), background var(--transition-fast);
+}
+
+.actor-detail-filter:hover {
+  color: var(--text);
+  border-color: var(--muted);
+}
+
+.actor-detail-filter.active {
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+/* Grid phim */
+.actor-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: var(--space-md);
+}
+
+@media (max-width: 1200px) {
+  .actor-detail-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@media (max-width: 900px) {
+  .actor-detail-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 580px) {
+  .actor-detail-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-sm);
+  }
+}
+
+.actor-detail-film-card {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  transition: transform var(--transition);
+}
+
+.actor-detail-film-card:hover {
+  transform: translateY(-4px);
+}
+
+.actor-detail-film-poster {
+  position: relative;
+  aspect-ratio: 2/3;
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--card);
+  margin-bottom: var(--space-sm);
+  border: 1px solid var(--border);
+}
+
+.actor-detail-film-poster img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform var(--transition);
+}
+
+.actor-detail-film-card:hover .actor-detail-film-poster img {
+  transform: scale(1.05);
+}
+
+.actor-detail-film-poster-ph {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.5rem;
+  background: linear-gradient(135deg, var(--bg3), var(--bg2));
+  color: var(--muted);
+}
+
+.actor-detail-film-badge {
+  position: absolute;
+  top: var(--space-sm);
+  left: var(--space-sm);
+  padding: 0.2rem 0.5rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.7rem;
+  font-weight: 600;
+  background: var(--overlay-bg);
+  color: var(--text-on-dark);
+}
+
+.actor-detail-film-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin-bottom: 0.15rem;
+  color: var(--text);
+}
+
+.actor-detail-film-title-en {
+  font-size: 0.78rem;
+  color: var(--text-soft);
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Timeline (chế độ Thời gian) */
+.actor-detail-timeline {
+  position: relative;
+  padding-left: var(--space-xl);
+}
+
+.actor-detail-timeline::before {
+  content: '';
+  position: absolute;
+  left: 0.4rem;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: linear-gradient(to bottom, var(--accent), var(--accent-soft));
+  border-radius: 1px;
+}
+
+.actor-detail-timeline-year-block {
+  position: relative;
+  margin-bottom: var(--space-lg);
+}
+
+.actor-detail-timeline-year-marker {
+  position: absolute;
+  left: -2rem;
+  top: 0.5rem;
+  transform: translateX(-100%);
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: 1px;
+  white-space: nowrap;
+}
+
+.actor-detail-timeline-dot {
+  position: absolute;
+  left: -2rem;
+  top: 0.6rem;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--accent);
+  transform: translate(-50%, -50%);
+  margin-left: 1px;
+  box-shadow: 0 0 0 3px var(--bg);
+}
+
+.actor-detail-timeline-films {
+  margin-left: var(--space-lg);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-md);
+}
+
+.actor-detail-film-card-inline {
+  display: flex;
+  flex-direction: column;
+  width: 140px;
+  flex-shrink: 0;
+}
+
+.actor-detail-film-card-inline .actor-detail-film-titles {
+  flex: 1;
+}
+
+@media (max-width: 640px) {
+  .actor-detail-page {
+    padding-top: 52px;
+  }
+  .actor-detail-layout {
+    padding: var(--space-md) var(--space-md) var(--space-2xl);
+  }
+  .actor-detail-name {
+    font-size: 1.4rem;
+  }
+  .actor-detail-avatar-wrap {
+    width: 160px;
+    height: 160px;
+  }
+  .actor-detail-toast {
+    bottom: 1rem;
+    left: var(--space-md);
+    right: var(--space-md);
+    width: auto;
+    max-width: none;
+    transform: translateY(80px);
+  }
+  .actor-detail-toast.show {
+    transform: translateY(0);
+  }
+}
+@media (max-width: 600px) {
+  .actor-detail-timeline {
+    padding-left: 1.75rem;
+  }
+  .actor-detail-timeline-year-marker {
+    font-size: 1rem;
+  }
+  .actor-detail-timeline-films {
+    margin-left: var(--space-md);
+  }
+  .actor-detail-film-card-inline {
+    width: 110px;
+  }
+}
+
+/* Toast */
+.actor-detail-toast {
+  position: fixed;
+  bottom: 1.75rem;
+  left: 50%;
+  transform: translateX(-50%) translateY(80px);
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 0.65rem 1.25rem;
+  font-size: 0.875rem;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  box-shadow: var(--shadow-lg);
+  z-index: 2000;
+  transition: transform 0.3s var(--ease-out);
+}
+
+.actor-detail-toast.show {
+  transform: translateX(-50%) translateY(0);
+}
+
+.actor-detail-toast i {
+  color: var(--accent);
+}

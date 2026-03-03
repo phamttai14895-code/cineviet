@@ -1,0 +1,31 @@
+{
+  "name": "phim-backend",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "node --watch src/index.js",
+    "start": "node src/index.js",
+    "db:init": "node scripts/initDb.js",
+    "reset-users": "node scripts/resetUsers.js",
+    "actors:sync": "node scripts/crawlActorsFromTmdb.js",
+    "slug:normalize": "node scripts/normalizeSlugs.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "nodemailer": "^6.9.16",
+    "better-sqlite3": "^11.6.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.1",
+    "express-validator": "^7.2.0",
+    "jsonwebtoken": "^9.0.2",
+    "multer": "^1.4.5-lts.1",
+    "openai": "^4.52.0",
+    "passport": "^0.7.0",
+    "passport-facebook": "^3.0.0",
+    "passport-google-oauth20": "^2.0.0",
+    "passport-jwt": "^4.0.1",
+    "passport-local": "^1.0.0",
+    "socket.io": "^4.8.3"
+  }
+}

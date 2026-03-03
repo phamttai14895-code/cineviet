@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Offline | CineViet</title>
+    <meta name="theme-color" content="#0A111F" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;700&display=swap" rel="stylesheet" />
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body {
+        font-family: 'Be Vietnam Pro', system-ui, sans-serif;
+        background: #0A111F;
+        color: #f0f4f8;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 1.5rem;
+        text-align: center;
+      }
+      .offline-icon {
+        font-size: 4rem;
+        color: #2DE0A0;
+        margin-bottom: 1rem;
+      }
+      h1 { font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem; }
+      p { color: #b8c4d4; font-size: 0.95rem; margin-bottom: 1.5rem; max-width: 320px; }
+      a, button {
+        display: inline-block;
+        padding: 0.6rem 1.25rem;
+        background: #2DE0A0;
+        color: #0A111F;
+        font-family: inherit;
+        font-weight: 600;
+        font-size: 0.9rem;
+        border: none;
+        border-radius: 9999px;
+        cursor: pointer;
+        text-decoration: none;
+      }
+      a:hover, button:hover { background: #3de8ad; }
+    </style>
+  </head>
+  <body>
+    <div class="offline-icon" aria-hidden="true">📡</div>
+    <h1>Bạn đang offline</h1>
+    <p>Không có kết nối mạng. Kiểm tra WiFi hoặc dữ liệu di động rồi thử lại.</p>
+    <button type="button" onclick="window.location.reload()">Thử lại</button>
+  </body>
+</html>
