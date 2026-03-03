@@ -701,6 +701,28 @@ Sau khi site chạy ổn định và có **robots.txt** + **sitemap.xml** trả 
 
 3. **Giảm tải:** Trong Admin → Crawl, giảm **Đến trang** (vd. 1–3 trang), ít nguồn hơn, hoặc bật **Tự động crawl** để job chạy nền theo lịch (không qua trình duyệt, không bị 504 từ Nginx/Cloudflare).
 
+### 11.3 Auto crawl toàn bộ phim KKPhim
+
+Để **tự động crawl toàn bộ phim** từ API KKPhim (PhimAPI):
+
+**Cách 1 – Crawl thủ công một lần đến hết**
+
+1. Vào **Admin** → **Crawl**.
+2. Phần **Crawl thủ công**: tick **Crawl đến hết trang (toàn bộ phim KKPhim, tự dừng khi hết dữ liệu)**.
+3. Bấm **Bắt đầu crawl**. Backend sẽ lần lượt lấy từ trang 1, 2, 3, … đến khi gặp trang không còn phim thì dừng (tối đa 500 trang). Lưu ý: job có thể chạy rất lâu, dễ bị 504 nếu gọi qua Nginx/Cloudflare; nên chạy từ VPS (SSH) hoặc dùng Cách 2.
+
+**Cách 2 – Auto crawl định kỳ (khuyến nghị)**
+
+1. Vào **Admin** → **Crawl** → phần **Auto crawl**.
+2. Bật **Bật auto crawl**.
+3. Chọn **Chạy mỗi** (vd. 30 phút hoặc 1 giờ).
+4. Tick **Crawl đến hết trang (auto chạy toàn bộ mỗi lần)** — mỗi lần chạy sẽ crawl từ trang 1 đến khi hết dữ liệu.
+5. Bấm **Lưu cấu hình auto**. Job sẽ chạy nền trên server (không qua trình duyệt), tránh 504, và tự cập nhật toàn bộ phim theo lịch.
+
+**Cách 3 – Crawl theo khoảng trang cố định**
+
+- Không tick "Crawl đến hết trang", đặt **Trang từ** 1 và **đến trang** N (1–500). Mỗi lần chỉ crawl N trang đầu; tăng dần N hoặc bật auto với N lớn để dần cover hết.
+
 ---
 
 ## 12. Cập nhật bản mới

@@ -16,6 +16,7 @@ export default function AdminCrawl() {
   const [sources, setSources] = useState(['phimapi']);
   const [pageFrom, setPageFrom] = useState(1);
   const [pageTo, setPageTo] = useState(3);
+  const [crawlToEnd, setCrawlToEnd] = useState(false);
   const [category, setCategory] = useState('');
   const [country, setCountry] = useState('');
   const [genres, setGenres] = useState([]);
@@ -29,6 +30,7 @@ export default function AdminCrawl() {
     sources: ['phimapi'],
     page_from: 1,
     page_to: 2,
+    crawl_to_end: false,
     category: '',
     country: '',
   });
@@ -101,7 +103,8 @@ export default function AdminCrawl() {
       const res = await admin.crawlRun({
         sources,
         page_from: pageFrom,
-        page_to: pageTo,
+        page_to: crawlToEnd ? 0 : pageTo,
+        crawl_to_end: crawlToEnd,
         category: category || undefined,
         country: country || undefined,
       });
@@ -154,6 +157,7 @@ export default function AdminCrawl() {
         sources: autoSettings.sources,
         page_from: autoSettings.page_from,
         page_to: autoSettings.page_to,
+        crawl_to_end: autoSettings.crawl_to_end,
         category: autoSettings.category || '',
         country: autoSettings.country || '',
       });
@@ -200,10 +204,11 @@ export default function AdminCrawl() {
                 <input
                   type="number"
                   min={1}
-                  max={20}
+                  max={500}
                   value={pageFrom}
                   onChange={(e) => setPageFrom(Number(e.target.value) || 1)}
                   className="admin-crawl-input"
+                  disabled={crawlToEnd}
                 />
               </div>
               <div className="admin-crawl-field">
@@ -211,12 +216,23 @@ export default function AdminCrawl() {
                 <input
                   type="number"
                   min={1}
-                  max={20}
+                  max={500}
                   value={pageTo}
                   onChange={(e) => setPageTo(Number(e.target.value) || 1)}
                   className="admin-crawl-input"
+                  disabled={crawlToEnd}
                 />
               </div>
+            </div>
+            <div className="admin-crawl-field admin-crawl-toggle-row">
+              <label className="admin-crawl-check">
+                <input
+                  type="checkbox"
+                  checked={crawlToEnd}
+                  onChange={(e) => setCrawlToEnd(e.target.checked)}
+                />
+                <span>Crawl đến hết trang (toàn bộ phim KKPhim, tự dừng khi hết dữ liệu)</span>
+              </label>
             </div>
             <div className="admin-crawl-row">
               <div className="admin-crawl-field">
@@ -356,10 +372,11 @@ export default function AdminCrawl() {
                 <input
                   type="number"
                   min={1}
-                  max={20}
+                  max={500}
                   value={autoSettings.page_from}
                   onChange={(e) => setAutoSettings((a) => ({ ...a, page_from: Number(e.target.value) || 1 }))}
                   className="admin-crawl-input"
+                  disabled={autoSettings.crawl_to_end}
                 />
               </div>
               <div className="admin-crawl-field">
@@ -367,12 +384,23 @@ export default function AdminCrawl() {
                 <input
                   type="number"
                   min={1}
-                  max={20}
+                  max={500}
                   value={autoSettings.page_to}
                   onChange={(e) => setAutoSettings((a) => ({ ...a, page_to: Number(e.target.value) || 1 }))}
                   className="admin-crawl-input"
+                  disabled={autoSettings.crawl_to_end}
                 />
               </div>
+            </div>
+            <div className="admin-crawl-field admin-crawl-toggle-row">
+              <label className="admin-crawl-check">
+                <input
+                  type="checkbox"
+                  checked={autoSettings.crawl_to_end === true}
+                  onChange={(e) => setAutoSettings((a) => ({ ...a, crawl_to_end: e.target.checked }))}
+                />
+                <span>Crawl đến hết trang (auto chạy toàn bộ mỗi lần)</span>
+              </label>
             </div>
             <div className="admin-crawl-field">
               <label>Nguồn auto</label>

@@ -1093,8 +1093,8 @@ router.post('/crawl/import', async (req, res) => {
   }
 });
 
-// Chạy crawl theo trang + lọc thể loại/quốc gia (3 nguồn)
-const CRAWL_MAX_PAGES = 20;
+// Chạy crawl theo trang + lọc thể loại/quốc gia (KKPhim)
+const CRAWL_MAX_PAGES = 500;
 const SOURCES = ['phimapi'];
 
 function getCrawlAutoSettings() {
@@ -1107,6 +1107,7 @@ function getCrawlAutoSettings() {
     sources: (o.crawl_auto_sources && JSON.parse(o.crawl_auto_sources)) || SOURCES,
     page_from: Math.max(1, parseInt(o.crawl_auto_page_from, 10) || 1),
     page_to: Math.max(1, Math.min(CRAWL_MAX_PAGES, parseInt(o.crawl_auto_page_to, 10) || 1)),
+    crawl_to_end: o.crawl_auto_to_end === '1',
     category: (o.crawl_auto_category || '').trim() || null,
     country: (o.crawl_auto_country || '').trim() || null,
   };
@@ -1128,6 +1129,7 @@ function setCrawlAutoSettings(data) {
   if (data.sources !== undefined) stmt.run('crawl_auto_sources', JSON.stringify(Array.isArray(data.sources) ? data.sources : SOURCES));
   if (data.page_from !== undefined) stmt.run('crawl_auto_page_from', String(data.page_from));
   if (data.page_to !== undefined) stmt.run('crawl_auto_page_to', String(data.page_to));
+  if (data.crawl_to_end !== undefined) stmt.run('crawl_auto_to_end', data.crawl_to_end ? '1' : '0');
   if (data.category !== undefined) stmt.run('crawl_auto_category', data.category || '');
   if (data.country !== undefined) stmt.run('crawl_auto_country', data.country || '');
 }
@@ -1142,16 +1144,16 @@ router.get('/crawl/logs', (req, res) => {
   res.json({ logs: entries });
 });
 
-// Chạy job crawl (dùng cho POST /crawl/run và auto-crawl)
-export async function runCrawlJob(sources, pageFrom, pageTo, category, country) {
+// Chạy job crawl (dùng cho POST /crawl/run và auto-crawl). crawlToEnd=true: lặp đến khi gặp trang rỗng (tối đa CRAWL_MAX_PAGES).
+export async function runCrawlJob(sources, pageFrom, pageTo, category, country, crawlToEnd = false) {
   const src = Array.isArray(sources) ? sources.filter((s) => SOURCES.includes(s)) : [...SOURCES];
   let pFrom = Math.max(1, parseInt(pageFrom, 10) || 1);
-  let pTo = Math.max(1, Math.min(CRAWL_MAX_PAGES, parseInt(pageTo, 10) || 1));
-  if (pTo < pFrom) pTo = pFrom;
+  let pTo = crawlToEnd ? CRAWL_MAX_PAGES : Math.max(1, Math.min(CRAWL_MAX_PAGES, parseInt(pageTo, 10) || 1));
+  if (!crawlToEnd && pTo < pFrom) pTo = pFrom;
   const cat = (category || '').trim() || null;
   const ctry = (country || '').trim() || null;
 
-  crawlLogger.logInfo(`Crawl bắt đầu — nguồn: ${src.join(', ')}, trang ${pFrom}–${pTo}${cat ? `, thể loại: ${cat}` : ''}${ctry ? `, quốc gia: ${ctry}` : ''}`, { sources: src, pageFrom: pFrom, pageTo: pTo });
+  crawlLogger.logInfo(`Crawl bắt đầu — nguồn: ${src.join(', ')}${crawlToEnd ? ', crawl đến hết trang' : `, trang ${pFrom}–${pTo}`}${cat ? `, thể loại: ${cat}` : ''}${ctry ? `, quốc gia: ${ctry}` : ''}`, { sources: src, pageFrom: pFrom, pageTo: crawlToEnd ? 'end' : pTo });
 
   const slugSet = new Set();
   for (const source of src) {
@@ -1159,6 +1161,7 @@ export async function runCrawlJob(sources, pageFrom, pageTo, category, country) 
       try {
         const homeData = await getHome(source, p);
         const items = homeData?.items ?? [];
+        if (crawlToEnd && items.length === 0) break;
         for (const it of items) {
           const slug = it?.slug;
           if (!slug || typeof slug !== 'string') continue;
@@ -1176,6 +1179,7 @@ export async function runCrawlJob(sources, pageFrom, pageTo, category, country) 
         const errMsg = e?.message ?? String(e);
         console.error('Crawl fetch error', source, p, e);
         crawlLogger.logError(`Lấy danh sách thất bại: ${source} trang ${p} — ${errMsg}`, { source, page: p });
+        if (crawlToEnd) break;
       }
     }
   }
@@ -1210,22 +1214,23 @@ export function startAutoCrawlTimer() {
   autoCrawlTimerId = setInterval(() => {
     const cfg = getCrawlAutoSettings();
     if (!cfg.enabled) return;
-    runCrawlJob(cfg.sources, cfg.page_from, cfg.page_to, cfg.category, cfg.country)
+    runCrawlJob(cfg.sources, cfg.page_from, cfg.page_to, cfg.category, cfg.country, cfg.crawl_to_end)
       .then((r) => console.log('[AutoCrawl]', r.total, 'slugs, created:', r.created, 'updated:', r.updated, 'failed:', r.failed))
       .catch((e) => console.error('[AutoCrawl]', e));
   }, ms);
   console.log('[AutoCrawl] Started, interval:', s.interval_minutes, 'min');
 }
 
-// POST /admin/crawl/run — crawl từ trang X đến Y, lọc thể loại/quốc gia, 3 nguồn
+// POST /admin/crawl/run — crawl từ trang X đến Y (hoặc đến hết nếu crawl_to_end=true)
 router.post('/crawl/run', async (req, res) => {
   const body = req.body || {};
   const sources = Array.isArray(body.sources) ? body.sources.filter((s) => SOURCES.includes(s)) : [...SOURCES];
   let pageFrom = Math.max(1, parseInt(body.page_from, 10) || 1);
   let pageTo = Math.max(1, Math.min(CRAWL_MAX_PAGES, parseInt(body.page_to, 10) || 1));
   if (pageTo < pageFrom) pageTo = pageFrom;
+  const crawlToEnd = body.crawl_to_end === true || body.crawl_to_end === '1';
   try {
-    const result = await runCrawlJob(sources, pageFrom, pageTo, body.category, body.country);
+    const result = await runCrawlJob(sources, pageFrom, pageTo, body.category, body.country, crawlToEnd);
     res.json(result);
   } catch (err) {
     const errMsg = err?.message ?? String(err);
