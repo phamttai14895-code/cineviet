@@ -11,6 +11,42 @@ const OPENAI_MODEL = process.env.OPENAI_MODEL || 'gpt-4o-mini';
 // Gemini 2.0 Flash ổn định với API key từ Google AI Studio (aistudio.google.com/apikey)
 const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-2.0-flash';
 
+// Cache kết quả AI để tiết kiệm quota (free tier rate limit: RPM/RPD). TTL mặc định 10 phút.
+const AI_CACHE_TTL_MS = Math.max(60_000, (parseInt(process.env.AI_CACHE_TTL_MINUTES, 10) || 10) * 60 * 1000);
+const aiCache = new Map();
+
+function cacheGet(key) {
+  const entry = aiCache.get(key);
+  if (!entry || Date.now() > entry.expiresAt) {
+    if (entry) aiCache.delete(key);
+    return null;
+  }
+  return entry.value;
+}
+
+function cacheSet(key, value) {
+  aiCache.set(key, { value, expiresAt: Date.now() + AI_CACHE_TTL_MS });
+  if (aiCache.size > 500) {
+    const now = Date.now();
+    for (const [k, v] of aiCache.entries()) if (v.expiresAt < now) aiCache.delete(k);
+  }
+}
+
+function suggestCacheKey(opts) {
+  return 'suggest:' + JSON.stringify({
+    mood: opts.mood || '',
+    genreId: opts.genreId || '',
+    country: opts.country || '',
+    type: opts.type || '',
+    era: opts.era || '',
+  });
+}
+
+function askCacheKey(question) {
+  const q = (question || '').trim().toLowerCase().replace(/\s+/g, ' ');
+  return 'ask:' + (q || '_empty');
+}
+
 let _aiClient = null;
 
 /** Trả về client có method complete(prompt, { temperature }) => Promise<string>, hoặc null nếu không cấu hình. */
@@ -171,6 +207,10 @@ export async function getAiSuggestions(opts) {
   const catalog = getMovieCatalog();
   if (catalog.length === 0) return [];
 
+  const cacheKey = suggestCacheKey(opts);
+  const cached = cacheGet(cacheKey);
+  if (cached && Array.isArray(cached)) return cached;
+
   const client = await getAiClient();
   if (!client) {
     return fallbackSuggest(catalog, opts);
@@ -182,9 +222,13 @@ export async function getAiSuggestions(opts) {
     const text = await client.complete(prompt, { temperature: 0.5 });
     const ids = parseIdsFromResponse(text);
     const validIds = catalog.map((m) => m.id);
-    return ids.filter((id) => validIds.includes(id)).slice(0, 24);
+    const result = ids.filter((id) => validIds.includes(id)).slice(0, 24);
+    cacheSet(cacheKey, result);
+    return result;
   } catch (err) {
-    console.error('AI suggest error:', err.message);
+    const is429 = err?.status === 429 || err?.httpStatusCode === 429 || /rate|quota|limit/i.test(String(err?.message || ''));
+    if (is429) console.warn('AI suggest rate limit (429), using fallback');
+    else console.error('AI suggest error:', err?.message);
     return fallbackSuggest(catalog, opts);
   }
 }
@@ -228,6 +272,12 @@ export async function askAi(question, genres) {
   const catalog = getMovieCatalog();
   if (!question || !question.trim()) return { answer: 'Bạn hãy nhập câu hỏi về phim.', movieIds: [] };
 
+  const cacheKey = askCacheKey(question);
+  const cached = cacheGet(cacheKey);
+  if (cached && typeof cached === 'object' && Array.isArray(cached.movieIds)) {
+    return { answer: cached.answer || 'Đã xử lý câu hỏi của bạn.', movieIds: cached.movieIds };
+  }
+
   const client = await getAiClient();
   if (!client) {
     const ids = fallbackSuggest(catalog, {});
@@ -244,22 +294,27 @@ export async function askAi(question, genres) {
     const validIds = new Set(catalog.map((m) => m.id));
     const ids = movieIds.filter((id) => validIds.has(id)).slice(0, 12);
     const answer = text.replace(/\{\s*"ids"\s*:\s*\[[^\]]*\]\s*\}/, '').trim();
-    return { answer: answer || 'Đã xử lý câu hỏi của bạn.', movieIds: ids };
+    const result = { answer: answer || 'Đã xử lý câu hỏi của bạn.', movieIds: ids };
+    cacheSet(cacheKey, result);
+    return result;
   } catch (err) {
     const status = err?.status ?? err?.response?.status ?? err?.httpStatusCode;
     const code = err?.code ?? err?.response?.data?.error?.code;
     const apiMsg = err?.message ?? err?.response?.data?.error?.message ?? '';
-    // Log đầy đủ để debug (API key sai, model không tồn tại, quota, v.v.)
-    console.error('AI ask error:', {
-      message: err?.message,
-      status,
-      code,
-      apiMessage: apiMsg,
-      details: err?.response?.data ? JSON.stringify(err.response.data).slice(0, 300) : undefined,
-    });
+    const is429 = status === 429 || /rate|quota|resource_exhausted/i.test(String(apiMsg));
+    if (is429) console.warn('AI ask rate limit (429), using fallback');
+    else {
+      console.error('AI ask error:', {
+        message: err?.message,
+        status,
+        code,
+        apiMessage: apiMsg,
+        details: err?.response?.data ? JSON.stringify(err.response.data).slice(0, 300) : undefined,
+      });
+    }
     const fallbackIds = fallbackSuggest(catalog, {});
     let hint = 'Không thể xử lý câu hỏi lúc này. Bạn thử lại sau nhé.';
-    if (status === 429) hint = 'Lượt gọi AI tạm hết. Thử lại sau vài phút.';
+    if (status === 429 || is429) hint = 'Lượt gọi AI tạm hết (giới hạn free tier). Thử lại sau vài phút.';
     else if (status >= 500) hint = 'Dịch vụ AI đang bận. Thử lại sau.';
     else if (status === 401 || status === 403 || /api_key|invalid|permission|quota/i.test(apiMsg))
       hint = 'Cấu hình AI chưa đúng (kiểm tra GEMINI_API_KEY trong backend/.env và log server để biết chi tiết).';

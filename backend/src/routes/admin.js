@@ -910,10 +910,24 @@ function ensureActor(db, name, avatarUrl = null, extra = {}) {
   }
 }
 
-// Helper: import một phim theo slug vào DB (dùng cho crawl/import và crawl/run)
-async function importMovieBySlug(slug) {
+// Helper: import một phim theo slug vào DB (dùng cho crawl/import và crawl/run).
+// opts: { excludeGenres?: string[], excludeCountries?: string[] } — khi có, nếu phim thuộc thể loại/quốc gia trong list thì bỏ qua (không lưu).
+async function importMovieBySlug(slug, opts = {}) {
   const crawled = await getMovieBySlug(slug);
   if (!crawled) return { ok: false, error: 'Không tìm thấy phim' };
+
+  const exclGenres = Array.isArray(opts.excludeGenres) ? opts.excludeGenres.map((s) => String(s).trim().toLowerCase()).filter(Boolean) : [];
+  const exclCountries = Array.isArray(opts.excludeCountries) ? opts.excludeCountries.map((s) => String(s).trim().toLowerCase()).filter(Boolean) : [];
+  if (exclGenres.length || exclCountries.length) {
+    const norm = (v) => (v == null || v === '') ? '' : slugify(String(v)).toLowerCase();
+    const movieGenreSlugs = (crawled.genres || []).map((g) => norm(g?.slug || g?.name || g)).filter(Boolean);
+    const movieCountrySlugs = [
+      ...(crawled.countries || []).map((c) => norm(typeof c === 'object' ? (c?.slug || c?.name) : c)),
+      crawled.country ? norm(crawled.country) : '',
+    ].filter(Boolean);
+    if (exclGenres.length && movieGenreSlugs.some((s) => exclGenres.includes(s))) return { ok: false, skipped: true, reason: 'excluded_genre' };
+    if (exclCountries.length && movieCountrySlugs.some((s) => exclCountries.includes(s))) return { ok: false, skipped: true, reason: 'excluded_country' };
+  }
 
   const genreRows = db.prepare('SELECT id, name, slug FROM genres').all();
   const genreBySlug = new Map(genreRows.map((g) => [String(g.slug).toLowerCase(), g.id]));
@@ -1196,6 +1210,22 @@ export async function runCrawlJob(sources, pageFrom, pageTo, excludeGenres, excl
 
   crawlLogger.logInfo(`Crawl bắt đầu — nguồn: ${src.join(', ')}${crawlToEnd ? `, crawl đến hết trang (1–${pTo})` : `, trang ${pFrom}–${pTo}`}${exclGenres.length ? `, bỏ qua thể loại: ${exclGenres.join(', ')}` : ''}${exclCountries.length ? `, bỏ qua quốc gia: ${exclCountries.join(', ')}` : ''}`, { sources: src, pageFrom: pFrom, pageTo: crawlToEnd ? pTo : pTo });
 
+  function toSlugLower(val) {
+    if (val == null || val === '') return '';
+    const s = slugify(String(val));
+    return s ? s.toLowerCase() : '';
+  }
+  function getGenreSlugsFromItem(it) {
+    const raw = it.category || it.categories || it.the_loai || it.genre || it.genres;
+    const arr = Array.isArray(raw) ? raw : (raw ? [raw] : []);
+    return arr.map((c) => (typeof c === 'object' && c ? (c.slug ? toSlugLower(c.slug) : toSlugLower(c.name || '')) : toSlugLower(c))).filter(Boolean);
+  }
+  function getCountrySlugsFromItem(it) {
+    const raw = it.country || it.countries || it.quoc_gia;
+    const arr = Array.isArray(raw) ? raw : (raw ? [raw] : []);
+    return arr.map((c) => (typeof c === 'object' && c ? (c.slug ? toSlugLower(c.slug) : toSlugLower(c.name || '')) : toSlugLower(c))).filter(Boolean);
+  }
+
   const slugSet = new Set();
   for (const source of src) {
     for (let p = pFrom; p <= pTo; p++) {
@@ -1207,14 +1237,12 @@ export async function runCrawlJob(sources, pageFrom, pageTo, excludeGenres, excl
           const slug = it?.slug;
           if (!slug || typeof slug !== 'string') continue;
           if (exclGenres.length) {
-            const cats = it.category || [];
-            const itemSlugs = Array.isArray(cats) ? cats.map((c) => (c?.slug || (c?.name && String(c.name).toLowerCase().replace(/\s+/g, '-')) || '').toLowerCase()).filter(Boolean) : [];
-            if (itemSlugs.some((s) => exclGenres.includes(s))) continue;
+            const itemSlugs = getGenreSlugsFromItem(it);
+            if (itemSlugs.length > 0 && itemSlugs.some((s) => exclGenres.includes(s))) continue;
           }
           if (exclCountries.length) {
-            const countries = it.country || [];
-            const itemCountrySlugs = Array.isArray(countries) ? countries.map((c) => (typeof c === 'object' ? (c?.slug || (c?.name && String(c.name).toLowerCase().replace(/\s+/g, '-')) || '') : String(c)).toLowerCase()).filter(Boolean) : [];
-            if (itemCountrySlugs.some((s) => exclCountries.includes(s))) continue;
+            const itemCountrySlugs = getCountrySlugsFromItem(it);
+            if (itemCountrySlugs.length > 0 && itemCountrySlugs.some((s) => exclCountries.includes(s))) continue;
           }
           slugSet.add(slug);
         }
@@ -1230,11 +1258,14 @@ export async function runCrawlJob(sources, pageFrom, pageTo, excludeGenres, excl
   const slugs = [...slugSet];
   let created = 0;
   let updated = 0;
+  let skipped = 0;
   const failed = [];
+  const importOpts = (exclGenres.length || exclCountries.length) ? { excludeGenres: exclGenres, excludeCountries: exclCountries } : {};
   for (const slug of slugs) {
     try {
-      const result = await importMovieBySlug(slug);
-      if (result.created) created++;
+      const result = await importMovieBySlug(slug, importOpts);
+      if (result.skipped) skipped++;
+      else if (result.created) created++;
       else if (result.updated) updated++;
     } catch (e) {
       const errMsg = e?.message ?? String(e);
@@ -1242,8 +1273,8 @@ export async function runCrawlJob(sources, pageFrom, pageTo, excludeGenres, excl
       crawlLogger.logError(`Crawl lỗi: ${slug} — ${errMsg}`, { slug });
     }
   }
-  crawlLogger.logInfo(`Crawl xong — ${slugs.length} slug, thêm mới: ${created}, cập nhật: ${updated}, lỗi: ${failed.length}`, { total: slugs.length, created, updated, failed: failed.length });
-  return { total: slugs.length, created, updated, failed: failed.length, failed_list: failed.slice(0, 20) };
+  crawlLogger.logInfo(`Crawl xong — ${slugs.length} slug, thêm mới: ${created}, cập nhật: ${updated}, bỏ qua (lọc): ${skipped}, lỗi: ${failed.length}`, { total: slugs.length, created, updated, skipped, failed: failed.length });
+  return { total: slugs.length, created, updated, skipped, failed: failed.length, failed_list: failed.slice(0, 20) };
 }
 
 let autoCrawlTimerId = null;

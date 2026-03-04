@@ -335,6 +335,7 @@ export default function AdminCrawl() {
                   <p><strong>Tổng slug:</strong> {result.total}</p>
                   <p><strong>Thêm mới:</strong> {result.created}</p>
                   <p><strong>Cập nhật:</strong> {result.updated}</p>
+                  {(result.skipped ?? 0) > 0 && <p><strong>Bỏ qua (lọc thể loại/quốc gia):</strong> {result.skipped}</p>}
                   <p><strong>Lỗi:</strong> {result.failed}</p>
                   {result.failed_list?.length > 0 && (
                     <details className="admin-crawl-failed-list">

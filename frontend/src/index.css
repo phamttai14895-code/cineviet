@@ -7949,6 +7949,13 @@
   margin-top: var(--space-lg);
 }
 
+.page-ai-recommend .ai-rate-hint {
+  margin: var(--space-sm) 0 0;
+  font-size: 0.8rem;
+  color: var(--muted, #666);
+  max-width: 420px;
+}
+
 .page-ai-recommend .btn-ai-suggest {
   display: inline-flex;
   align-items: center;

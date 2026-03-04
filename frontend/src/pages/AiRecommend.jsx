@@ -213,6 +213,7 @@ export default function AiRecommend() {
               )}
               {suggestLoading ? 'Đang gợi ý...' : 'Nhận gợi ý từ AI'}
             </button>
+            <p className="ai-rate-hint">Gợi ý cùng bộ lọc được lưu tạm vài phút để tiết kiệm lượt gọi (free tier).</p>
           </div>
         </section>
 
@@ -254,6 +255,7 @@ export default function AiRecommend() {
               </button>
             ))}
           </div>
+          <p className="ai-rate-hint">Câu hỏi giống nhau được lưu tạm để tiết kiệm lượt gọi (free tier). Khi hết quota, hệ thống vẫn gợi ý phim theo kho.</p>
         </section>
 
         {askResult?.answer && (
