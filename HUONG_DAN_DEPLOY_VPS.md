@@ -268,14 +268,13 @@ Restart backend sau khi sửa.
 
 ---
 
-#### 4.3.6 Các API khác (TMDB, OMDB, AI gợi ý phim)
+#### 4.3.6 Các API khác (TMDB, AI gợi ý phim)
 
 **Ở đâu cấu hình:** **Backend** — file `backend/.env`.
 
 | Tính năng | Biến môi trường | Lấy key / ghi chú |
 |-----------|-----------------|--------------------|
 | TMDB (cast, ảnh khi crawl) | `TMDB_API_KEY` | [themoviedb.org/settings/api](https://www.themoviedb.org/settings/api) |
-| OMDb (IMDb khi TMDB thiếu) | `OMDB_API_KEY` | [omdbapi.com/apikey.aspx](https://www.omdbapi.com/apikey.aspx) |
 | **AI gợi ý phim (chọn một hãng)** | | |
 | Hãng AI | `AI_PROVIDER` | `openai` (mặc định) hoặc `gemini`. |
 | OpenAI (ChatGPT) | `OPENAI_API_KEY` | [platform.openai.com/api-keys](https://platform.openai.com/api-keys). Kèm `OPENAI_MODEL` (mặc định `gpt-4o-mini`). |

@@ -4,7 +4,6 @@ import settingsConfig from '../config/settings.js';
 import { getMovieBySlug, getHome } from '../services/crawlMerge.js';
 import { sanitizeImageUrl } from '../services/normalizeMovie.js';
 import { fetchTmdbCredits, parseTmdbCredits, searchTmdbByTitle, fetchTmdbPersonWithAvatar } from '../services/tmdbCredits.js';
-import { fetchOmdbByImdbId, searchOmdbByTitle, parseOmdbCredits } from '../services/omdbCredits.js';
 import { rewriteMovieDescription } from '../services/aiRecommend.js';
 import requestLogger from '../config/requestLogger.js';
 import crawlLogger from '../config/crawlLogger.js';
@@ -1014,37 +1013,6 @@ async function importMovieBySlug(slug, opts = {}) {
           ? { avatar: enriched.avatar, biography: enriched.biography, tmdb_id: enriched.tmdb_id }
           : { avatar: c.avatar };
         ensureActor(db, c.name, c.avatar, extra);
-      }
-    }
-  }
-
-  if (process.env.OMDB_API_KEY) {
-    let omdbData = null;
-    const imdbId = crawled.imdb_id && String(crawled.imdb_id).trim();
-    if (imdbId) {
-      omdbData = await fetchOmdbByImdbId(imdbId);
-    }
-    if (!omdbData && crawled.title) {
-      const omdbImdbId = await searchOmdbByTitle(crawled.title, crawled.release_year);
-      if (omdbImdbId) omdbData = await fetchOmdbByImdbId(omdbImdbId);
-    }
-    if (omdbData) {
-      const parsed = parseOmdbCredits(omdbData);
-      const existingDirectors = new Set(directorStr.split(',').map((s) => s.trim().toLowerCase()).filter(Boolean));
-      for (const d of parsed.directors) {
-        if (d.name && !existingDirectors.has(d.name.trim().toLowerCase())) {
-          existingDirectors.add(d.name.trim().toLowerCase());
-          directorStr = directorStr ? `${directorStr}, ${d.name.trim()}` : d.name.trim();
-          ensureDirector(db, d.name, null);
-        }
-      }
-      const existingCastNames = new Set(castArr.map((c) => c.name.trim().toLowerCase()));
-      for (const c of parsed.cast) {
-        if (c.name && !existingCastNames.has(c.name.trim().toLowerCase())) {
-          existingCastNames.add(c.name.trim().toLowerCase());
-          castArr.push({ name: c.name.trim() });
-          ensureActor(db, c.name, null);
-        }
       }
     }
   }

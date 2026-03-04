@@ -412,7 +412,7 @@ export default function Header() {
           </div>
 
           {/* <NavLink to="/nam" className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}>Năm</NavLink> */}
-          <NavLink to="/goi-y" className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}>Tui pick, bạn chill 😌</NavLink>
+          <NavLink to="/goi-y" className={({ isActive }) => `nav-link nav-link-pick ${isActive ? 'active' : ''}`}>Tui pick, bạn chill 😌</NavLink>
           <NavLink to="/xem-chung" className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}>Xem Chung</NavLink>
           <NavLink to="/dien-vien" className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}>Diễn Viên</NavLink>
         </nav>

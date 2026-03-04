@@ -236,4 +236,74 @@ try {
   `);
 } catch (_) {}
 
+// Migration: gộp quốc gia / thể loại trùng (nht-bn vs nhat-ban → một bản ghi, slug chuẩn slugify)
+try {
+  const run = db.transaction(() => {
+    // --- Countries: nhóm theo slugify(name), giữ một bản ghi, cập nhật movies.country, xóa bản trùng, chuẩn hóa slug
+    const countries = db.prepare('SELECT id, name, slug FROM countries').all();
+    const byNorm = new Map();
+    for (const c of countries) {
+      const norm = slugify(c.name) || slugify(c.slug) || '';
+      if (!norm) continue;
+      if (!byNorm.has(norm)) byNorm.set(norm, []);
+      byNorm.get(norm).push(c);
+    }
+    const updateMovieCountry = db.prepare('UPDATE movies SET country = ? WHERE country = ?');
+    const updateCountrySlug = db.prepare('UPDATE countries SET slug = ?, name = ? WHERE id = ?');
+    const deleteCountry = db.prepare('DELETE FROM countries WHERE id = ?');
+    for (const [, group] of byNorm) {
+      if (group.length <= 1) {
+        const c = group[0];
+        const newSlug = slugify(c.name);
+        if (newSlug && newSlug !== c.slug) updateCountrySlug.run(newSlug, c.name, c.id);
+        continue;
+      }
+      group.sort((a, b) => a.id - b.id);
+      const canonical = group[0];
+      const canonicalName = canonical.name.trim();
+      const canonicalSlug = slugify(canonicalName);
+      for (let i = 1; i < group.length; i++) {
+        const dup = group[i];
+        updateMovieCountry.run(canonicalName, dup.name);
+        deleteCountry.run(dup.id);
+      }
+      if (canonicalSlug && canonicalSlug !== canonical.slug) updateCountrySlug.run(canonicalSlug, canonicalName, canonical.id);
+    }
+
+    // --- Genres: nhóm theo slugify(name), giữ một genre_id, cập nhật movie_genres, xóa thể loại trùng, chuẩn hóa slug
+    const genres = db.prepare('SELECT id, name, slug FROM genres').all();
+    const genreByNorm = new Map();
+    for (const g of genres) {
+      const norm = slugify(g.name) || slugify(g.slug) || '';
+      if (!norm) continue;
+      if (!genreByNorm.has(norm)) genreByNorm.set(norm, []);
+      genreByNorm.get(norm).push(g);
+    }
+    const updateMovieGenre = db.prepare('UPDATE movie_genres SET genre_id = ? WHERE genre_id = ?');
+    const updateGenreSlug = db.prepare('UPDATE genres SET slug = ?, name = ? WHERE id = ?');
+    const deleteGenre = db.prepare('DELETE FROM genres WHERE id = ?');
+    for (const [, group] of genreByNorm) {
+      if (group.length <= 1) {
+        const g = group[0];
+        const newSlug = slugify(g.name);
+        if (newSlug && newSlug !== g.slug) updateGenreSlug.run(newSlug, g.name, g.id);
+        continue;
+      }
+      group.sort((a, b) => a.id - b.id);
+      const canonical = group[0];
+      const canonicalName = canonical.name.trim();
+      const canonicalSlug = slugify(canonicalName);
+      for (let i = 1; i < group.length; i++) {
+        const dup = group[i];
+        // Xóa (movie_id, dup.id) nếu phim đó đã có (movie_id, canonical.id) để tránh trùng khóa
+        db.prepare('DELETE FROM movie_genres WHERE genre_id = ? AND movie_id IN (SELECT movie_id FROM movie_genres WHERE genre_id = ?)').run(dup.id, canonical.id);
+        updateMovieGenre.run(canonical.id, dup.id);
+        deleteGenre.run(dup.id);
+      }
+      if (canonicalSlug && canonicalSlug !== canonical.slug) updateGenreSlug.run(canonicalSlug, canonicalName, canonical.id);
+    }
+  });
+  run();
+} catch (_) { /* bảng countries/genres chưa có hoặc lỗi, bỏ qua */ }
+
 export default db;
