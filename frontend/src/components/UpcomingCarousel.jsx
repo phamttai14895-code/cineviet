@@ -13,7 +13,7 @@ export default function UpcomingCarousel({ movies = [] }) {
         <div className="home-section-header">
           <h2 className="home-section-title">
             <span className="bar" aria-hidden />
-            Phim Sắp Tới
+            <span className="home-section-title-text">Phim Sắp Tới</span>
           </h2>
           {hasMovies && (
             <Link to="/phim-sap-toi" className="home-section-view-all">

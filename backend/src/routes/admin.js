@@ -1234,7 +1234,8 @@ router.post('/crawl/run', async (req, res) => {
     res.json(result);
   } catch (err) {
     const errMsg = err?.message ?? String(err);
-    console.error('[Crawl run]', err);
+    console.error('[Crawl run]', errMsg, err?.stack);
+    crawlLogger.logError(`Crawl run lỗi: ${errMsg}`, { error: errMsg });
     res.status(500).json({ error: errMsg || 'Lỗi khi crawl', stack: process.env.NODE_ENV === 'development' ? err?.stack : undefined });
   }
 });

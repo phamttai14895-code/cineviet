@@ -115,7 +115,7 @@ export default function Home() {
           <div className="home-section-header">
             <h2 className="home-section-title">
               <span className="bar" aria-hidden />
-              PHIM MỚI CẬP NHẬT
+              <span className="home-section-title-text">PHIM MỚI CẬP NHẬT</span>
             </h2>
           </div>
         </div>
@@ -130,7 +130,7 @@ export default function Home() {
           <div className="home-section-header">
             <h2 className="home-section-title">
               <span className="bar" aria-hidden />
-              PHIM CHIẾU RẠP
+              <span className="home-section-title-text">PHIM CHIẾU RẠP</span>
             </h2>
             <Link to="/phim-chieu-rap" className="home-section-view-all">
               Xem tất cả <i className="fas fa-chevron-right" />
@@ -152,7 +152,7 @@ export default function Home() {
           <div className="home-section-header">
             <h2 className="home-section-title">
               <span className="bar" aria-hidden />
-              PHIM BỘ ĐANG CHIẾU
+              <span className="home-section-title-text">PHIM BỘ ĐANG CHIẾU</span>
             </h2>
             <Link to="/phim-bo" className="home-section-view-all">
               Xem tất cả <i className="fas fa-chevron-right" />
@@ -174,7 +174,7 @@ export default function Home() {
           <div className="home-section-header">
             <h2 className="home-section-title">
               <span className="bar" aria-hidden />
-              PHIM LẺ MỚI
+              <span className="home-section-title-text">PHIM LẺ MỚI</span>
             </h2>
             <Link to="/phim-le" className="home-section-view-all">
               Xem tất cả <i className="fas fa-chevron-right" />
@@ -196,7 +196,7 @@ export default function Home() {
           <div className="home-section-header">
             <h2 className="home-section-title">
               <span className="bar" aria-hidden />
-              ANIME
+              <span className="home-section-title-text">ANIME</span>
             </h2>
             <Link to="/anime" className="home-section-view-all">
               Xem tất cả <i className="fas fa-chevron-right" />
@@ -218,7 +218,7 @@ export default function Home() {
           <div className="home-section-header">
             <h2 className="home-section-title">
               <span className="bar" aria-hidden />
-              TV SHOWS
+              <span className="home-section-title-text">TV SHOWS</span>
             </h2>
             <Link to="/tv-shows" className="home-section-view-all">
               Xem tất cả <i className="fas fa-chevron-right" />

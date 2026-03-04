@@ -11,8 +11,13 @@ import { normalizePhimApi, normalizeLangKey } from './normalizeMovie.js';
  */
 export async function getMovieBySlug(slug) {
   const res = await fetchPhimApi(phimapiUrls.phim(slug));
-  if (!res?.movie || res.status === false) return null;
-  return normalizePhimApi(res);
+  if (!res || res.status === false || !res.movie || typeof res.movie !== 'object') return null;
+  try {
+    return normalizePhimApi(res);
+  } catch (e) {
+    console.error('[crawlMerge] normalizePhimApi error for slug:', slug, e);
+    return null;
+  }
 }
 
 /**
@@ -21,12 +26,15 @@ export async function getMovieBySlug(slug) {
 export async function getHome(source = 'phimapi', page = 1) {
   if (source !== 'phimapi') return { items: [], pagination: null };
   const res = await fetchPhimApi(phimapiUrls.phimMoiCapNhat(page));
-  if (!res?.items) return { items: [], pagination: res?.pagination || null };
-  const items = (res.items || []).map((it) => ({
-    ...it,
-    lang_key: normalizeLangKey(it.lang_key, it.lang, it.lang),
-  }));
-  return { items, pagination: res.pagination };
+  const rawItems = Array.isArray(res?.items) ? res.items : [];
+  const items = rawItems.map((it) => {
+    try {
+      return { ...it, lang_key: normalizeLangKey(it?.lang_key, it?.lang, it?.lang) };
+    } catch {
+      return it;
+    }
+  });
+  return { items, pagination: res?.pagination || null };
 }
 
 /**

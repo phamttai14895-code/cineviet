@@ -49,7 +49,7 @@ export default function ContinueWatchingSection() {
         <div className="home-section-header">
           <h2 className="home-section-title">
             <span className="bar" aria-hidden />
-            Tiếp Tục Xem
+            <span className="home-section-title-text">Tiếp Tục Xem</span>
           </h2>
         </div>
       </div>

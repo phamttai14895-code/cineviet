@@ -13,7 +13,7 @@ export default function Top10Carousel({ movies = [], title = 'Top 10 Phim Xem Nh
         <div className="home-section-header">
           <h2 className="home-section-title">
             <span className="bar" aria-hidden />
-            {title}
+            <span className="home-section-title-text">{title}</span>
           </h2>
           <Link to="/phim-moi" className="home-section-view-all">
             Xem tất cả <i className="fas fa-chevron-right" />

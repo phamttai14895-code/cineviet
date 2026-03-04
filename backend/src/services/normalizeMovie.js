@@ -197,6 +197,7 @@ export function normalizeOphim(apiResponse) {
 export function normalizePhimApi(apiResponse) {
   if (!apiResponse?.movie || apiResponse.status === false) return null;
   const movie = apiResponse.movie;
+  if (!movie || typeof movie !== 'object') return null;
   const episodes = Array.isArray(apiResponse.episodes) ? apiResponse.episodes : [];
   const phimapiBase = 'https://phimapi.com';
   const poster = toAbsoluteImageUrl(movie.poster_url, phimapiBase) || toAbsoluteImageUrl(movie.thumb_url, phimapiBase) || null;

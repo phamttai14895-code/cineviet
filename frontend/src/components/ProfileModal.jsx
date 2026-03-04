@@ -5,12 +5,12 @@ import { useToast } from '../context/ToastContext';
 import { user as userApi } from '../api/client';
 import AvatarPickerModal from './AvatarPickerModal';
 
-export default function ProfileModal({ open, onClose }) {
+export default function ProfileModal({ open, onClose, initialTab }) {
   const { user, refreshUser } = useAuth();
   const { toast } = useToast();
   const [name, setName] = useState(user?.name || '');
   const [avatarPreview, setAvatarPreview] = useState(user?.avatar || '');
-  const [activeTab, setActiveTab] = useState('stats'); // 'stats' | 'password' | 'notifications'
+  const [activeTab, setActiveTab] = useState(initialTab || 'stats'); // 'stats' | 'password' | 'notifications'
   const [favoritesCount, setFavoritesCount] = useState(0);
   const [historyCount, setHistoryCount] = useState(0);
   const [loadingStats, setLoadingStats] = useState(false);
@@ -34,6 +34,10 @@ export default function ProfileModal({ open, onClose }) {
     setName(user?.name || '');
     setAvatarPreview(user?.avatar || '');
   }, [user]);
+
+  useEffect(() => {
+    if (open) setActiveTab(initialTab || 'stats');
+  }, [open, initialTab]);
 
   useEffect(() => {
     if (!open || !user) return;

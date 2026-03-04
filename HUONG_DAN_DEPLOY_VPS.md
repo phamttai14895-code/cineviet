@@ -478,7 +478,7 @@ sudo chmod 600 /etc/nginx/ssl/cloudflare-origin.key
 Mở file cấu hình site:
 
 ```bash
-sudo nano /etc/nginx/sites-available/cineviet
+    sudo nano /etc/nginx/sites-available/cineviet
 ```
 
 **Thêm** hoặc sửa để có **hai** block `server`: một cho HTTP (80) redirect sang HTTPS, một cho HTTPS (443). Ví dụ:

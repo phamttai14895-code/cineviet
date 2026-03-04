@@ -16,7 +16,14 @@ export default function Header() {
   const navigate = useNavigate();
   const location = useLocation();
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [profileModalOpen, setProfileModalOpen] = useState(false);
+  const [profileModalState, setProfileModalState] = useState({ open: false, initialTab: null });
+
+  const openProfileModal = (initialTab = null) => {
+    setProfileModalState({ open: true, initialTab });
+  };
+  const closeProfileModal = () => {
+    setProfileModalState({ open: false, initialTab: null });
+  };
   const [genreDropdownOpen, setGenreDropdownOpen] = useState(false);
   const [countryDropdownOpen, setCountryDropdownOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -582,7 +589,7 @@ export default function Header() {
               </button>
               {dropdownOpen && (
                 <div className="user-menu-dropdown-panel">
-                  <button type="button" className="user-menu-item" onClick={() => { setDropdownOpen(false); setProfileModalOpen(true); }}>
+                  <button type="button" className="user-menu-item" onClick={() => { setDropdownOpen(false); openProfileModal(); }}>
                     {'Thông tin cá nhân'}
                   </button>
                   <Link to="/profile" className="user-menu-item" onClick={() => setDropdownOpen(false)}>
@@ -698,7 +705,7 @@ export default function Header() {
           </nav>
           {user && (
             <div className="header-mobile-drawer-footer">
-              <button type="button" className="header-mobile-drawer-link" onClick={() => { setMobileMenuOpen(false); setProfileModalOpen(true); }}>
+              <button type="button" className="header-mobile-drawer-link" onClick={() => { setMobileMenuOpen(false); openProfileModal(); }}>
                 {'Thông tin cá nhân'}
               </button>
               <Link to="/profile" className="header-mobile-drawer-link" onClick={() => setMobileMenuOpen(false)}>{'Yêu thích / Đã xem'}</Link>
@@ -713,7 +720,7 @@ export default function Header() {
         </div>
       </div>
 
-      <ProfileModal open={profileModalOpen} onClose={() => setProfileModalOpen(false)} />
+      <ProfileModal open={profileModalState.open} onClose={closeProfileModal} initialTab={profileModalState.initialTab} />
       <LoginModal
         open={loginModalOpen}
         onClose={() => setLoginModalOpen(false)}
