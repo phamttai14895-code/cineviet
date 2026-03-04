@@ -782,31 +782,33 @@ router.delete('/movies/:id/episodes', (req, res) => {
   res.json({ movie_id: id, episodes: parsed });
 });
 
-// Helper: đảm bảo thể loại có trong DB, trả về id (tự thêm nếu chưa có)
+// Helper: đảm bảo thể loại có trong DB, trả về id (tự thêm nếu chưa có).
+// Slug chuẩn hóa bằng slugify() để "Nhật Bản" / "Nhat Ban" cùng trỏ về một bản ghi, tránh trùng.
 function ensureGenre(db, name, slug, genreBySlug, genreByName) {
-  const s = String((slug || name || '').toLowerCase().trim()).replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-  const n = String(name || s).trim();
+  const n = String(name || slug || '').trim();
   if (!n) return null;
-  const keySlug = s || n.toLowerCase().replace(/\s+/g, '-');
+  const slugFinal = slugify(n) || n.toLowerCase().replace(/\s+/g, '-');
   const keyName = n.toLowerCase();
-  if (genreBySlug.has(keySlug)) return genreBySlug.get(keySlug);
+  if (genreBySlug.has(slugFinal)) return genreBySlug.get(slugFinal);
   if (genreByName.has(keyName)) return genreByName.get(keyName);
-  const slugFinal = s || keyName.replace(/\s+/g, '-');
-  const r = db.prepare('INSERT OR IGNORE INTO genres (name, slug) VALUES (?, ?)').run(n, slugFinal);
-  const row = db.prepare('SELECT id FROM genres WHERE slug = ? OR name = ?').get(slugFinal, n);
+  db.prepare('INSERT OR IGNORE INTO genres (name, slug) VALUES (?, ?)').run(n, slugFinal);
+  const row = db.prepare('SELECT id FROM genres WHERE slug = ?').get(slugFinal) || db.prepare('SELECT id FROM genres WHERE name = ?').get(n);
   if (!row) return null;
-  genreBySlug.set(keySlug, row.id);
+  genreBySlug.set(slugFinal, row.id);
   genreByName.set(keyName, row.id);
   return row.id;
 }
 
-// Helper: đảm bảo quốc gia có trong DB (tự thêm nếu chưa có)
-function ensureCountry(db, name) {
+// Helper: đảm bảo quốc gia có trong DB (tự thêm nếu chưa có).
+// Slug chuẩn hóa bằng slugify() và map countryBySlug để "Nhật Bản" / "Nhat Ban" không tạo hai bản ghi.
+function ensureCountry(db, name, countryBySlug) {
   if (!name || typeof name !== 'string') return;
   const n = name.trim();
   if (!n) return;
-  const slug = n.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') || n;
+  const slug = slugify(n) || n.toLowerCase().replace(/\s+/g, '-');
+  if (countryBySlug && countryBySlug.has(slug)) return;
   db.prepare('INSERT OR IGNORE INTO countries (name, slug) VALUES (?, ?)').run(n, slug);
+  if (countryBySlug) countryBySlug.set(slug, true);
 }
 
 // Helper: đảm bảo năm phát hành có trong DB (tự thêm nếu chưa có)
@@ -930,8 +932,14 @@ async function importMovieBySlug(slug, opts = {}) {
   }
 
   const genreRows = db.prepare('SELECT id, name, slug FROM genres').all();
-  const genreBySlug = new Map(genreRows.map((g) => [String(g.slug).toLowerCase(), g.id]));
-  const genreByName = new Map(genreRows.map((g) => [String(g.name).toLowerCase().trim(), g.id]));
+  const genreBySlug = new Map();
+  const genreByName = new Map();
+  for (const g of genreRows) {
+    const slugNorm = slugify(g.slug || '') || slugify(g.name || '');
+    const nameNorm = String(g.name || '').toLowerCase().trim();
+    if (slugNorm) genreBySlug.set(slugNorm, g.id);
+    if (nameNorm) genreByName.set(nameNorm, g.id);
+  }
 
   const genreIds = [];
   for (const g of crawled.genres || []) {
@@ -942,8 +950,14 @@ async function importMovieBySlug(slug, opts = {}) {
   }
   const genreIdsUnique = [...new Set(genreIds)];
 
+  const countryRows = db.prepare('SELECT id, name, slug FROM countries').all();
+  const countryBySlug = new Map();
+  for (const c of countryRows) {
+    const slugNorm = slugify(c.slug || '') || slugify(c.name || '');
+    if (slugNorm) countryBySlug.set(slugNorm, true);
+  }
   const country = crawled.country && typeof crawled.country === 'string' ? crawled.country : (crawled.countries?.[0]?.name || null);
-  if (country) ensureCountry(db, country);
+  if (country) ensureCountry(db, country, countryBySlug);
 
   const releaseYear = crawled.release_year ? parseInt(crawled.release_year, 10) : null;
   if (releaseYear) ensureReleaseYear(db, releaseYear);

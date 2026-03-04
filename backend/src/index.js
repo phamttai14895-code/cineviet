@@ -12,7 +12,6 @@ import settingsConfig from './config/settings.js';
 import requestLogger from './config/requestLogger.js';
 import authRoutes from './routes/auth.js';
 import moviesRoutes from './routes/movies.js';
-import recommendationsRoutes from './routes/recommendations.js';
 import userRoutes from './routes/user.js';
 import adminRoutes, { startAutoCrawlTimer, startAutoActorsSyncTimer } from './routes/admin.js';
 import crawlRoutes from './routes/crawl.js';
@@ -89,7 +88,6 @@ app.use('/api', csrfMiddleware);
 
 app.use('/api/auth', authRoutes);
 app.use('/api/movies', moviesRoutes);
-app.use('/api/recommendations', recommendationsRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/crawl', crawlRoutes);

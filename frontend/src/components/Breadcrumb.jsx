@@ -13,7 +13,7 @@ const PATH_LABELS = {
   'quoc-gia': 'Quốc gia',
   'dien-vien': 'Diễn viên',
   'nam': 'Năm',
-  'goi-y': 'AI Gợi ý',
+  'goi-y': 'Tui pick, bạn chill 😌',
   'xem-chung': 'Xem Chung',
   'tim-kiem': 'Tìm kiếm',
   'movie': 'Phim',

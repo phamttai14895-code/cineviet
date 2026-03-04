@@ -27,7 +27,7 @@ const sections = [
       { to: '/the-loai', label: 'Thể loại' },
       { to: '/quoc-gia', label: 'Quốc gia' },
       { to: '/dien-vien', label: 'Diễn viên' },
-      { to: '/goi-y', label: 'Gợi ý AI' },
+      { to: '/goi-y', label: 'Tui pick, bạn chill 😌' },
       { to: '/xem-chung', label: 'Xem Chung' },
     ],
   },

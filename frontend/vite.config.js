@@ -5,10 +5,18 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 5173,
-    hmr: {
-      host: 'localhost',
-      port: 5173,
-      protocol: 'ws',
+    /* Tắt HMR (WebSocket) để tránh lỗi đỏ và reload liên tục — đổi file xong cần F5 tay */
+    hmr: true,
+    watch: {
+      ignored: [
+        '**/node_modules/**',
+        '**/dist/**',
+        '**/.git/**',
+        '**/backend/**',
+        '**/*.db',
+        '**/*.db-wal',
+        '**/*.db-shm',
+      ],
     },
     proxy: {
       '/api': { target: 'http://localhost:5000', changeOrigin: true },

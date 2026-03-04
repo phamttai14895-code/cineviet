@@ -109,6 +109,59 @@ router.get('/', (req, res) => {
   res.json(payload);
 });
 
+// Random 1 phim (query: genre, country, release_year — tùy chọn)
+router.get('/random', (req, res) => {
+  const { genre, country, release_year } = req.query;
+  const where = ["(m.status IS NULL OR m.status = 'published')"];
+  const params = [];
+  if (genre) {
+    where.push('m.id IN (SELECT movie_id FROM movie_genres WHERE genre_id = ?)');
+    params.push(genre);
+  }
+  let resolvedCountry = null;
+  if (country && String(country).trim()) {
+    const countryParam = String(country).trim();
+    const slugNorm = slugify(countryParam);
+    if (slugNorm) {
+      const bySlug = db.prepare('SELECT name FROM countries WHERE slug = ?').get(slugNorm);
+      if (bySlug) resolvedCountry = bySlug.name;
+      else {
+        const distinct = db.prepare('SELECT DISTINCT country FROM movies WHERE country IS NOT NULL AND country != ""').all();
+        const found = distinct.find((r) => slugify(r.country) === slugNorm);
+        if (found) resolvedCountry = found.country;
+      }
+    }
+    if (!resolvedCountry) resolvedCountry = countryParam;
+    where.push('m.country = ?');
+    params.push(resolvedCountry);
+  }
+  if (release_year) {
+    const year = parseInt(release_year, 10);
+    if (!Number.isNaN(year) && year >= 1900 && year <= 2100) {
+      where.push('m.release_year = ?');
+      params.push(year);
+    }
+  }
+  const whereClause = 'WHERE ' + where.join(' AND ');
+  const row = db.prepare(`
+    SELECT m.*, GROUP_CONCAT(DISTINCT g.name) as genres, GROUP_CONCAT(DISTINCT g.id) as genre_ids
+    FROM movies m
+    LEFT JOIN movie_genres mg ON m.id = mg.movie_id
+    LEFT JOIN genres g ON mg.genre_id = g.id
+    ${whereClause}
+    GROUP BY m.id
+    ORDER BY RANDOM()
+    LIMIT 1
+  `).get(...params);
+  if (!row) return res.json({ movie: null });
+  const movie = {
+    ...row,
+    genres: row.genres ? row.genres.split(',') : [],
+    genre_ids: row.genre_ids ? row.genre_ids.split(',').map(Number) : [],
+  };
+  res.json({ movie });
+});
+
 // Gợi ý tìm kiếm (dropdown): tìm theo tên VN, tên EN, diễn viên (cast)
 router.get('/suggest', (req, res) => {
   const q = (req.query.q || '').trim();

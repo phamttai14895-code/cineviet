@@ -16,7 +16,6 @@ const MovieDetail = lazy(() => import('./pages/MovieDetail'));
 const Watch = lazy(() => import('./pages/Watch'));
 const Actor = lazy(() => import('./pages/Actor'));
 const Actors = lazy(() => import('./pages/Actors'));
-const AiRecommend = lazy(() => import('./pages/AiRecommend'));
 const TheLoai = lazy(() => import('./pages/TheLoai'));
 const QuocGia = lazy(() => import('./pages/QuocGia'));
 const NamPhatHanh = lazy(() => import('./pages/NamPhatHanh'));
@@ -33,6 +32,7 @@ const Terms = lazy(() => import('./pages/Terms'));
 const Privacy = lazy(() => import('./pages/Privacy'));
 const Dmca = lazy(() => import('./pages/Dmca'));
 const Sitemap = lazy(() => import('./pages/Sitemap'));
+const XemGiHomNay = lazy(() => import('./pages/XemGiHomNay'));
 const PwaGuide = lazy(() => import('./pages/PwaGuide'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 
@@ -78,7 +78,7 @@ export default function App() {
         <Route path="register" element={<Navigate to="/" replace />} />
         <Route path="auth/callback" element={<AuthCallback />} />
         <Route path="browse" element={<Navigate to="/" replace />} />
-        <Route path="goi-y" element={<AiRecommend />} />
+        <Route path="goi-y" element={<XemGiHomNay />} />
         <Route path="the-loai" element={<TheLoai />} />
         <Route path="the-loai/:id" element={<FilteredMovieListPage filterType="genre" paramKey="id" />} />
         <Route path="quoc-gia" element={<QuocGia />} />

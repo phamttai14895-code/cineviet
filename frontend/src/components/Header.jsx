@@ -412,9 +412,9 @@ export default function Header() {
           </div>
 
           {/* <NavLink to="/nam" className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}>Năm</NavLink> */}
+          <NavLink to="/goi-y" className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}>Tui pick, bạn chill 😌</NavLink>
           <NavLink to="/xem-chung" className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}>Xem Chung</NavLink>
           <NavLink to="/dien-vien" className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}>Diễn Viên</NavLink>
-          <NavLink to="/goi-y" className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}>AI Gợi Ý</NavLink>
         </nav>
         <div className="header-right">
           <div ref={searchWrapRef} className="header-search-wrap">
@@ -646,6 +646,11 @@ export default function Header() {
               <span>{user.name || 'Tài khoản'}</span>
             </Link>
           )}
+          <div className="header-mobile-drawer-pick-wrap">
+            <NavLink to="/goi-y" className={({ isActive }) => `header-mobile-drawer-pick-link ${isActive ? 'active' : ''}`} onClick={() => setMobileMenuOpen(false)}>
+              Tui pick, bạn chill 😌
+            </NavLink>
+          </div>
           <nav className="header-mobile-drawer-nav">
             <NavLink to="/phim-moi" className={({ isActive }) => `header-mobile-drawer-link ${isActive ? 'active' : ''}`} onClick={() => setMobileMenuOpen(false)}>{'Phim Mới'}</NavLink>
             <div className="header-mobile-drawer-dropdown">
@@ -701,7 +706,6 @@ export default function Header() {
             <NavLink to="/phim-le" className={({ isActive }) => `header-mobile-drawer-link ${isActive ? 'active' : ''}`} onClick={() => setMobileMenuOpen(false)}>{'Phim Lẻ'}</NavLink>
             <NavLink to="/xem-chung" className={({ isActive }) => `header-mobile-drawer-link ${isActive ? 'active' : ''}`} onClick={() => setMobileMenuOpen(false)}>{'Xem Chung'}</NavLink>
             <NavLink to="/dien-vien" className={({ isActive }) => `header-mobile-drawer-link ${isActive ? 'active' : ''}`} onClick={() => setMobileMenuOpen(false)}>{'Diễn Viên'}</NavLink>
-            <NavLink to="/goi-y" className={({ isActive }) => `header-mobile-drawer-link ${isActive ? 'active' : ''}`} onClick={() => setMobileMenuOpen(false)}>{'AI Gợi Ý'}</NavLink>
           </nav>
           {user && (
             <div className="header-mobile-drawer-footer">

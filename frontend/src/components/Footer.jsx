@@ -115,8 +115,8 @@ export default function Footer({ isAdmin = false }) {
                 <li><Link to="/the-loai">Thể Loại</Link></li>
                 <li><Link to="/quoc-gia">Quốc Gia</Link></li>
                 <li><Link to="/dien-vien">Diễn Viên</Link></li>
+                <li><Link to="/goi-y">Tui pick, bạn chill 😌</Link></li>
                 <li><Link to="/">Trang chủ</Link></li>
-                <li><Link to="/goi-y">Gợi ý AI</Link></li>
                 <li><Link to="/xem-chung">Xem Chung</Link></li>
               </ul>
             </div>

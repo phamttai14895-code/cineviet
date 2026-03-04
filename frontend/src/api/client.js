@@ -50,6 +50,7 @@ export const movies = {
   ratingStats: (id) => client.get(`/movies/${id}/rating-stats`),
   genres: () => client.get('/movies/meta/genres'),
   countries: () => client.get('/movies/meta/countries'),
+  random: (params) => client.get('/movies/random', { params }),
   comments: (movieId) => client.get(`/movies/${movieId}/comments`),
   createComment: (movieId, data) => client.post(`/movies/${movieId}/comments`, typeof data === 'string' ? { content: data } : data),
   likeComment: (movieId, commentId) => client.post(`/movies/${movieId}/comments/${commentId}/like`),
@@ -62,11 +63,6 @@ export const home = {
 export const actors = {
   list: (params) => client.get('/actors', { params }),
   get: (slug) => client.get(`/actors/${slug}`),
-};
-export const recommendations = {
-  forYou: (limit = 12) => client.get('/recommendations/for-you', { params: { limit } }),
-  aiSuggest: (body) => client.post('/recommendations/ai-suggest', body),
-  aiAsk: (body) => client.post('/recommendations/ai-ask', body),
 };
 export const user = {
   stats: () => client.get('/user/stats'),

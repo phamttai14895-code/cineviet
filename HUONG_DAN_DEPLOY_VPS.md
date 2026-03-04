@@ -740,7 +740,7 @@ Sau khi site chạy ổn định và có **robots.txt** + **sitemap.xml** trả 
 
 ```bash
 cd /var/www/cineviet
-git pull
+git pull origin main
 # hoặc upload code mới và giải nén
 
 # Backend

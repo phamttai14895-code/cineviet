@@ -29,12 +29,6 @@ export function csrfMiddleware(req, res, next) {
 
   const method = (req.method || 'GET').toUpperCase();
   const isSafe = ['GET', 'HEAD', 'OPTIONS'].includes(method);
-  const path = (req.path || req.originalUrl || '').split('?')[0];
-  const isRecommendationAi = path.endsWith('/recommendations/ai-suggest') || path.endsWith('/recommendations/ai-ask');
-  if (!isSafe && isRecommendationAi) {
-    res.locals.csrfToken = null;
-    return next();
-  }
 
   if (isSafe) {
     let token = getTokenFromCookie(req);

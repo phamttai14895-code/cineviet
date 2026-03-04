@@ -36,7 +36,13 @@ export default function PwaUpdateNotice() {
 
   useEffect(() => {
     if (!waitingWorker || !showBanner) return;
-    const onControllerChange = () => window.location.reload();
+    let didReload = false;
+    const onControllerChange = () => {
+      if (didReload) return;
+      didReload = true;
+      navigator.serviceWorker.removeEventListener('controllerchange', onControllerChange);
+      window.location.reload();
+    };
     navigator.serviceWorker.addEventListener('controllerchange', onControllerChange);
     return () => navigator.serviceWorker.removeEventListener('controllerchange', onControllerChange);
   }, [waitingWorker, showBanner]);
