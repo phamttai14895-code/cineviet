@@ -8,7 +8,8 @@ import db from '../config/db.js';
  */
 const AI_PROVIDER = (process.env.AI_PROVIDER || 'openai').toLowerCase();
 const OPENAI_MODEL = process.env.OPENAI_MODEL || 'gpt-4o-mini';
-const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-1.5-flash';
+// Gemini 2.0 Flash ổn định với API key từ Google AI Studio (aistudio.google.com/apikey)
+const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-2.0-flash';
 
 let _aiClient = null;
 
@@ -16,10 +17,12 @@ let _aiClient = null;
 async function getAiClient() {
   if (_aiClient !== null) return _aiClient;
 
-  if ((AI_PROVIDER === 'gemini' && process.env.GEMINI_API_KEY) || (!process.env.OPENAI_API_KEY && process.env.GEMINI_API_KEY)) {
+  const geminiKey = (process.env.GEMINI_API_KEY || '').trim();
+  if ((AI_PROVIDER === 'gemini' && geminiKey) || (!process.env.OPENAI_API_KEY && geminiKey)) {
     try {
-      const { GoogleGenAI } = await import('@google/genai');
-      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+      // Node: dùng '@google/genai/node' để tránh lỗi môi trường
+      const { GoogleGenAI } = await import('@google/genai/node');
+      const ai = new GoogleGenAI({ apiKey: geminiKey });
       _aiClient = {
         complete: async (prompt, { temperature = 0.5 } = {}) => {
           const res = await ai.models.generateContent({
@@ -32,7 +35,7 @@ async function getAiClient() {
       };
       return _aiClient;
     } catch (e) {
-      console.error('Gemini init error:', e?.message);
+      console.error('Gemini init error:', e?.message, e?.stack);
     }
   }
 
@@ -243,16 +246,23 @@ export async function askAi(question, genres) {
     const answer = text.replace(/\{\s*"ids"\s*:\s*\[[^\]]*\]\s*\}/, '').trim();
     return { answer: answer || 'Đã xử lý câu hỏi của bạn.', movieIds: ids };
   } catch (err) {
-    const status = err?.status ?? err?.response?.status;
+    const status = err?.status ?? err?.response?.status ?? err?.httpStatusCode;
     const code = err?.code ?? err?.response?.data?.error?.code;
-    console.error('AI ask error:', err.message, status ? `status=${status}` : '', code ? `code=${code}` : '');
+    const apiMsg = err?.message ?? err?.response?.data?.error?.message ?? '';
+    // Log đầy đủ để debug (API key sai, model không tồn tại, quota, v.v.)
+    console.error('AI ask error:', {
+      message: err?.message,
+      status,
+      code,
+      apiMessage: apiMsg,
+      details: err?.response?.data ? JSON.stringify(err.response.data).slice(0, 300) : undefined,
+    });
     const fallbackIds = fallbackSuggest(catalog, {});
-    const hint =
-      status === 429
-        ? 'Lượt gọi AI tạm hết. Thử lại sau vài phút.'
-        : status >= 500
-          ? 'Dịch vụ AI đang bận. Thử lại sau.'
-          : 'Không thể xử lý câu hỏi lúc này. Bạn thử lại sau nhé.';
+    let hint = 'Không thể xử lý câu hỏi lúc này. Bạn thử lại sau nhé.';
+    if (status === 429) hint = 'Lượt gọi AI tạm hết. Thử lại sau vài phút.';
+    else if (status >= 500) hint = 'Dịch vụ AI đang bận. Thử lại sau.';
+    else if (status === 401 || status === 403 || /api_key|invalid|permission|quota/i.test(apiMsg))
+      hint = 'Cấu hình AI chưa đúng (kiểm tra GEMINI_API_KEY trong backend/.env và log server để biết chi tiết).';
     return {
       answer: `${hint} Dưới đây là một số phim gợi ý từ kho của chúng tôi.`,
       movieIds: fallbackIds.slice(0, 8),

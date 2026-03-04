@@ -223,14 +223,14 @@ export default function HoverPopupCard({ movie, children, className = '' }) {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
     timeoutRef.current = null;
     const to = e?.relatedTarget;
-    if (to && popupRef.current && popupRef.current.contains(to)) return;
+    if (to && typeof Node !== 'undefined' && to instanceof Node && popupRef.current && popupRef.current.contains(to)) return;
     popupAlreadyOpenRef.current = false;
     setVisible(false);
   };
 
   const handlePopupMouseLeave = (e) => {
     const to = e?.relatedTarget;
-    if (to && wrapRef.current && wrapRef.current.contains(to)) return;
+    if (to && typeof Node !== 'undefined' && to instanceof Node && wrapRef.current && wrapRef.current.contains(to)) return;
     popupAlreadyOpenRef.current = false;
     setVisible(false);
   };

@@ -89,6 +89,7 @@ export default function AiRecommend() {
   };
 
   const displayMovies = askResult?.movies?.length ? askResult.movies : suggestedMovies;
+  const displayMoviesLimit = displayMovies.slice(0, 12);
   const hasResults = displayMovies.length > 0 || (askResult && askResult.answer);
 
   return (
@@ -245,20 +246,26 @@ export default function AiRecommend() {
         )}
 
         {hasResults && (
-          <section className="section ai-section">
-            <h2 className="home-section-title ai-section-heading">
-              <span className="bar" aria-hidden />
-              <i className="fas fa-film" aria-hidden />
-              {askResult?.movies?.length ? 'Phim AI gợi ý' : 'Gợi ý theo lựa chọn của bạn'}
-            </h2>
-            {displayMovies.length > 0 ? (
-              <div className="ai-results-grid">
-                {displayMovies.map((m) => (
-                  <HomeMovieCard key={m.id} movie={m} />
-                ))}
+          <section className="section home-section-with-grid ai-section ai-results-section">
+            <div className="container">
+              <h2 className="home-section-title ai-section-heading">
+                <span className="bar" aria-hidden />
+                <i className="fas fa-film" aria-hidden />
+                {askResult?.movies?.length ? 'Phim AI gợi ý' : 'Gợi ý theo lựa chọn của bạn'}
+              </h2>
+            </div>
+            {displayMoviesLimit.length > 0 ? (
+              <div className="home-section-grid-wrap">
+                <div className="home-section-grid-7x2">
+                  {displayMoviesLimit.map((m) => (
+                    <HomeMovieCard key={m.id} movie={m} />
+                  ))}
+                </div>
               </div>
             ) : (
-              <p className="ai-no-movies">Chưa có phim nào phù hợp. Thử đổi bộ lọc hoặc hỏi AI cụ thể hơn.</p>
+              <div className="container">
+                <p className="ai-no-movies">Chưa có phim nào phù hợp. Thử đổi bộ lọc hoặc hỏi AI cụ thể hơn.</p>
+              </div>
             )}
           </section>
         )}

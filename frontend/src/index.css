@@ -8089,31 +8089,45 @@
 }
 
 /* Lưới phim — cùng layout với Home (7 cột desktop, responsive) */
-.page-ai-recommend .ai-results-grid {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: var(--space-md);
-}
-
-.page-ai-recommend .ai-results-grid .home-movie-card-wrap {
+/* Gợi ý theo lựa chọn / Phim AI gợi ý — giống Home: 6 phim 1 dòng, tối đa 12 phim */
+.page-ai-recommend .ai-results-section .home-section-grid-wrap {
   width: 100%;
+  max-width: 1520px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: var(--space-lg);
+  padding-right: var(--space-lg);
+  box-sizing: border-box;
 }
 
-@media (max-width: 1200px) {
-  .page-ai-recommend .ai-results-grid {
-    grid-template-columns: repeat(5, 1fr);
+.page-ai-recommend .ai-results-section .home-section-grid-7x2 {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: var(--space-md);
+  max-width: none;
+}
+
+.page-ai-recommend .ai-results-section .home-section-grid-7x2 .movie-card,
+.page-ai-recommend .ai-results-section .home-section-grid-7x2 .home-movie-card-wrap {
+  width: 100%;
+  min-width: 0;
+}
+
+@media (max-width: 1024px) {
+  .page-ai-recommend .ai-results-section .home-section-grid-wrap {
+    padding-left: var(--space-md);
+    padding-right: var(--space-md);
   }
-}
-
-@media (max-width: 900px) {
-  .page-ai-recommend .ai-results-grid {
-    grid-template-columns: repeat(4, 1fr);
+  .page-ai-recommend .ai-results-section .home-section-grid-7x2 {
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-md);
   }
 }
 
 @media (max-width: 600px) {
-  .page-ai-recommend .ai-results-grid {
-    grid-template-columns: repeat(3, 1fr);
+  .page-ai-recommend .ai-results-section .home-section-grid-7x2 {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-sm);
   }
 }
 
