@@ -247,7 +247,10 @@ export function normalizePhimApi(apiResponse) {
       const name = String(c).trim();
       return name ? { name } : null;
     }).filter(Boolean),
-    tmdb_id: movie.tmdb_id ?? movie.tmdb ?? movie.movie_id ?? null,
+    // PhimAPI trả về tmdb dạng object { type: "tv", id: "304885", ... } — lấy id để gọi TMDB credits
+    tmdb_id: (movie.tmdb && typeof movie.tmdb === 'object' && (movie.tmdb.id != null || movie.tmdb.id !== undefined))
+      ? (Number(movie.tmdb.id) || String(movie.tmdb.id))
+      : (movie.tmdb_id ?? movie.movie_id ?? null),
     imdb_id: movie.imdb_id ?? null,
     episodes,
     raw: null,

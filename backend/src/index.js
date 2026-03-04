@@ -14,7 +14,7 @@ import authRoutes from './routes/auth.js';
 import moviesRoutes from './routes/movies.js';
 import recommendationsRoutes from './routes/recommendations.js';
 import userRoutes from './routes/user.js';
-import adminRoutes, { startAutoCrawlTimer } from './routes/admin.js';
+import adminRoutes, { startAutoCrawlTimer, startAutoActorsSyncTimer } from './routes/admin.js';
 import crawlRoutes from './routes/crawl.js';
 import actorsRoutes from './routes/actors.js';
 import imageRoutes from './routes/image.js';
@@ -182,4 +182,5 @@ registerWatchParty(io);
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`Backend running at http://0.0.0.0:${PORT}`);
   if (typeof startAutoCrawlTimer === 'function') startAutoCrawlTimer();
+  if (typeof startAutoActorsSyncTimer === 'function') startAutoActorsSyncTimer();
 });

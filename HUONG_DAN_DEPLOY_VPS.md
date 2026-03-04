@@ -727,6 +727,8 @@ Sau khi site chạy ổn định và có **robots.txt** + **sitemap.xml** trả 
 4. Tick **Crawl đến hết trang (auto chạy toàn bộ mỗi lần)** — mỗi lần chạy sẽ crawl từ trang 1 đến khi hết dữ liệu.
 5. Bấm **Lưu cấu hình auto**. Job sẽ chạy nền trên server (không qua trình duyệt), tránh 504, và tự cập nhật toàn bộ phim theo lịch.
 
+**Auto crawl không chạy?** Kiểm tra: (1) Đã bật **Bật auto crawl** và bấm **Lưu cấu hình auto** (nếu chỉ bật mà không Lưu thì sau khi restart server sẽ không chạy). (2) Restart backend: `pm2 restart cineviet-api`. (3) Xem log: `pm2 logs cineviet-api` — nếu thấy `[AutoCrawl] Started, interval: 30 min` là đã bật; nếu thấy `[AutoCrawl] Chưa bật...` thì vào Admin bật lại và Lưu.
+
 **Cách 3 – Crawl theo khoảng trang cố định**
 
 - Không tick "Crawl đến hết trang", đặt **Trang từ** 1 và **đến trang** N (1–500). Mỗi lần chỉ crawl N trang đầu; tăng dần N hoặc bật auto với N lớn để dần cover hết.

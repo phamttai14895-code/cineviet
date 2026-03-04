@@ -1029,8 +1029,9 @@ async function importMovieBySlug(slug) {
   const title = crawled.title || slug;
   const titleEn = crawled.title_en || null;
   let description = (crawled.description || '').trim();
-  // AI tự động viết lại/dịch nội dung phim sang tiếng Việt (dùng chung OpenAI với AI gợi ý)
-  if (description && process.env.OPENAI_API_KEY) {
+  // AI tự động viết lại/dịch mô tả phim (tắt khi hết quota: đặt ENABLE_AI_REWRITE_ON_CRAWL=0 trong .env)
+  const allowAiRewrite = process.env.ENABLE_AI_REWRITE_ON_CRAWL !== '0' && process.env.ENABLE_AI_REWRITE_ON_CRAWL !== 'false';
+  if (description && allowAiRewrite && (process.env.OPENAI_API_KEY || process.env.GEMINI_API_KEY)) {
     try {
       const rewritten = await Promise.race([
         rewriteMovieDescription(description, title),
@@ -1114,7 +1115,8 @@ router.post('/crawl/import', async (req, res) => {
 });
 
 // Chạy crawl theo trang + lọc thể loại/quốc gia (KKPhim)
-const CRAWL_MAX_PAGES = 500;
+// API phim-moi-cap-nhat có thể có 1100+ trang (26k+ phim) — cần đủ để "crawl đến hết trang"
+const CRAWL_MAX_PAGES = 30000;
 const SOURCES = ['phimapi'];
 
 function getCrawlAutoSettings() {
@@ -1130,6 +1132,8 @@ function getCrawlAutoSettings() {
     crawl_to_end: o.crawl_auto_to_end === '1',
     exclude_genres: parseJsonArray(o.crawl_auto_exclude_genres),
     exclude_countries: parseJsonArray(o.crawl_auto_exclude_countries),
+    actors_sync_enabled: o.crawl_actors_sync_enabled === '1',
+    actors_sync_interval_minutes: Math.max(60, parseInt(o.crawl_actors_sync_interval_minutes, 10) || 360),
   };
 }
 function parseJsonArray(str) {
@@ -1152,6 +1156,8 @@ function setCrawlAutoSettings(data) {
   if (data.crawl_to_end !== undefined) stmt.run('crawl_auto_to_end', data.crawl_to_end ? '1' : '0');
   if (data.exclude_genres !== undefined) stmt.run('crawl_auto_exclude_genres', JSON.stringify(Array.isArray(data.exclude_genres) ? data.exclude_genres : []));
   if (data.exclude_countries !== undefined) stmt.run('crawl_auto_exclude_countries', JSON.stringify(Array.isArray(data.exclude_countries) ? data.exclude_countries : []));
+  if (data.actors_sync_enabled !== undefined) stmt.run('crawl_actors_sync_enabled', data.actors_sync_enabled ? '1' : '0');
+  if (data.actors_sync_interval_minutes !== undefined) stmt.run('crawl_actors_sync_interval_minutes', String(Math.max(60, parseInt(data.actors_sync_interval_minutes, 10) || 360)));
 }
 
 router.get('/crawl/auto-settings', (req, res) => {
@@ -1170,10 +1176,25 @@ export async function runCrawlJob(sources, pageFrom, pageTo, excludeGenres, excl
   let pFrom = Math.max(1, parseInt(pageFrom, 10) || 1);
   let pTo = crawlToEnd ? CRAWL_MAX_PAGES : Math.max(1, Math.min(CRAWL_MAX_PAGES, parseInt(pageTo, 10) || 1));
   if (!crawlToEnd && pTo < pFrom) pTo = pFrom;
+
+  // Khi "crawl đến hết trang": lấy totalPages từ API (trang 1) để crawl đủ theo pagination thực tế (vd. 1103 trang)
+  if (crawlToEnd && src.length > 0) {
+    try {
+      const first = await getHome(src[0], 1);
+      const totalPages = first?.pagination?.totalPages;
+      if (typeof totalPages === 'number' && totalPages >= 1) {
+        pTo = Math.min(CRAWL_MAX_PAGES, totalPages);
+        crawlLogger.logInfo(`Crawl đến hết trang: API báo ${totalPages} trang — sẽ crawl trang 1–${pTo}`, { totalPages, pTo });
+      }
+    } catch (e) {
+      console.error('[Crawl] Lấy totalPages trang 1:', e?.message);
+    }
+  }
+
   const exclGenres = Array.isArray(excludeGenres) ? excludeGenres.map((s) => String(s).trim().toLowerCase()).filter(Boolean) : [];
   const exclCountries = Array.isArray(excludeCountries) ? excludeCountries.map((s) => String(s).trim().toLowerCase()).filter(Boolean) : [];
 
-  crawlLogger.logInfo(`Crawl bắt đầu — nguồn: ${src.join(', ')}${crawlToEnd ? ', crawl đến hết trang' : `, trang ${pFrom}–${pTo}`}${exclGenres.length ? `, bỏ qua thể loại: ${exclGenres.join(', ')}` : ''}${exclCountries.length ? `, bỏ qua quốc gia: ${exclCountries.join(', ')}` : ''}`, { sources: src, pageFrom: pFrom, pageTo: crawlToEnd ? 'end' : pTo });
+  crawlLogger.logInfo(`Crawl bắt đầu — nguồn: ${src.join(', ')}${crawlToEnd ? `, crawl đến hết trang (1–${pTo})` : `, trang ${pFrom}–${pTo}`}${exclGenres.length ? `, bỏ qua thể loại: ${exclGenres.join(', ')}` : ''}${exclCountries.length ? `, bỏ qua quốc gia: ${exclCountries.join(', ')}` : ''}`, { sources: src, pageFrom: pFrom, pageTo: crawlToEnd ? pTo : pTo });
 
   const slugSet = new Set();
   for (const source of src) {
@@ -1230,8 +1251,17 @@ let autoCrawlTimerId = null;
 export function startAutoCrawlTimer() {
   if (autoCrawlTimerId) clearInterval(autoCrawlTimerId);
   autoCrawlTimerId = null;
-  const s = getCrawlAutoSettings();
-  if (!s.enabled) return;
+  let s;
+  try {
+    s = getCrawlAutoSettings();
+  } catch (e) {
+    console.error('[AutoCrawl] Lỗi đọc cấu hình:', e?.message);
+    return;
+  }
+  if (!s.enabled) {
+    console.log('[AutoCrawl] Chưa bật. Vào Admin > Crawl > bật "Bật auto crawl" và bấm "Lưu cấu hình auto".');
+    return;
+  }
   const ms = s.interval_minutes * 60 * 1000;
   autoCrawlTimerId = setInterval(() => {
     const cfg = getCrawlAutoSettings();
@@ -1241,6 +1271,34 @@ export function startAutoCrawlTimer() {
       .catch((e) => console.error('[AutoCrawl]', e));
   }, ms);
   console.log('[AutoCrawl] Started, interval:', s.interval_minutes, 'min');
+}
+
+let autoActorsSyncTimerId = null;
+const ACTORS_SYNC_LIMIT = 500;
+
+export function startAutoActorsSyncTimer() {
+  if (autoActorsSyncTimerId) clearInterval(autoActorsSyncTimerId);
+  autoActorsSyncTimerId = null;
+  let s;
+  try {
+    s = getCrawlAutoSettings();
+  } catch (e) {
+    console.error('[AutoActorsSync] Lỗi đọc cấu hình:', e?.message);
+    return;
+  }
+  if (!s.actors_sync_enabled) {
+    console.log('[AutoActorsSync] Chưa bật. Vào Admin > Crawl > bật "Auto đồng bộ diễn viên TMDB" và bấm "Lưu cấu hình auto".');
+    return;
+  }
+  const ms = s.actors_sync_interval_minutes * 60 * 1000;
+  autoActorsSyncTimerId = setInterval(() => {
+    const cfg = getCrawlAutoSettings();
+    if (!cfg.actors_sync_enabled) return;
+    import('../services/syncActorsFromTmdb.js').then(({ syncActorsFromTmdb }) => syncActorsFromTmdb(ACTORS_SYNC_LIMIT))
+      .then((r) => console.log('[AutoActorsSync]', r?.updated ?? 0, 'updated, errors:', r?.errors ?? 0))
+      .catch((e) => console.error('[AutoActorsSync]', e?.message ?? e));
+  }, ms);
+  console.log('[AutoActorsSync] Started, interval:', s.actors_sync_interval_minutes, 'min');
 }
 
 // POST /admin/crawl/run — crawl từ trang X đến Y (hoặc đến hết nếu crawl_to_end=true)
@@ -1268,6 +1326,7 @@ router.post('/crawl/run', async (req, res) => {
 router.put('/crawl/auto-settings', (req, res) => {
   setCrawlAutoSettings(req.body || {});
   startAutoCrawlTimer();
+  startAutoActorsSyncTimer();
   res.json(getCrawlAutoSettings());
 });
 

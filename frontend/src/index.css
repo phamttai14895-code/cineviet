@@ -14555,6 +14555,16 @@
 }
 
 .admin-crawl-run-btn,
+.admin-crawl-divider {
+  border: 0;
+  border-top: 1px solid var(--border-color, #e0e0e0);
+  margin: 1.25rem 0;
+}
+.admin-crawl-subtitle {
+  font-size: 1rem;
+  margin: 0 0 0.5rem;
+  font-weight: 600;
+}
 .admin-crawl-save-auto-btn {
   align-self: flex-start;
   display: inline-flex;

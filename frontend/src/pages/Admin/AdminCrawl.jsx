@@ -11,6 +11,13 @@ const INTERVAL_OPTIONS = [
   { value: 120, label: '2 giờ' },
 ];
 
+const INTERVAL_OPTIONS_ACTORS = [
+  { value: 60, label: '1 giờ' },
+  { value: 360, label: '6 giờ' },
+  { value: 720, label: '12 giờ' },
+  { value: 1440, label: '24 giờ' },
+];
+
 export default function AdminCrawl() {
   const { toast } = useToast();
   const [sources, setSources] = useState(['phimapi']);
@@ -33,6 +40,8 @@ export default function AdminCrawl() {
     crawl_to_end: false,
     exclude_genres: [],
     exclude_countries: [],
+    actors_sync_enabled: false,
+    actors_sync_interval_minutes: 360,
   });
   const [savingAuto, setSavingAuto] = useState(false);
   const [autoSettingsLoading, setAutoSettingsLoading] = useState(true);
@@ -183,6 +192,8 @@ export default function AdminCrawl() {
         crawl_to_end: autoSettings.crawl_to_end,
         exclude_genres: autoSettings.exclude_genres || [],
         exclude_countries: autoSettings.exclude_countries || [],
+        actors_sync_enabled: autoSettings.actors_sync_enabled,
+        actors_sync_interval_minutes: autoSettings.actors_sync_interval_minutes ?? 360,
       });
       setAutoSettings(res.data);
       toast.success('Đã lưu cấu hình auto.');
@@ -510,6 +521,33 @@ export default function AdminCrawl() {
               </div>
               {(autoSettings.exclude_countries || []).length > 0 && <p className="admin-crawl-muted">Đã chọn {(autoSettings.exclude_countries || []).length} quốc gia bỏ qua.</p>}
             </div>
+            <hr className="admin-crawl-divider" />
+            <h3 className="admin-crawl-subtitle">Auto đồng bộ diễn viên TMDB</h3>
+            <p className="admin-crawl-muted">Tự động gọi đồng bộ diễn viên từ TMDB theo chu kỳ (tối đa 500/lần). Cần TMDB_API_KEY.</p>
+            <div className="admin-crawl-field admin-crawl-toggle-row">
+              <label className="admin-crawl-switch">
+                <input
+                  type="checkbox"
+                  checked={autoSettings.actors_sync_enabled === true}
+                  onChange={(e) => setAutoSettings((a) => ({ ...a, actors_sync_enabled: e.target.checked }))}
+                  disabled={autoSettingsLoading}
+                />
+                <span className="admin-crawl-slider" />
+              </label>
+              <span>Bật auto đồng bộ diễn viên</span>
+            </div>
+            <div className="admin-crawl-field">
+              <label>Chạy mỗi</label>
+              <select
+                value={autoSettings.actors_sync_interval_minutes ?? 360}
+                onChange={(e) => setAutoSettings((a) => ({ ...a, actors_sync_interval_minutes: Number(e.target.value) }))}
+                className="admin-crawl-select"
+              >
+                {INTERVAL_OPTIONS_ACTORS.map((o) => (
+                  <option key={o.value} value={o.value}>{o.label}</option>
+                ))}
+              </select>
+            </div>
             <button
               type="button"
               className="btn btn-primary admin-crawl-save-auto-btn"
@@ -522,6 +560,11 @@ export default function AdminCrawl() {
           {autoSettings.enabled && (
             <p className="admin-crawl-auto-status">
               <i className="fas fa-check-circle" /> Auto crawl đang bật — chạy mỗi {autoSettings.interval_minutes} phút
+            </p>
+          )}
+          {autoSettings.actors_sync_enabled && (
+            <p className="admin-crawl-auto-status">
+              <i className="fas fa-check-circle" /> Auto đồng bộ diễn viên đang bật — chạy mỗi {autoSettings.actors_sync_interval_minutes ?? 360} phút
             </p>
           )}
         </section>
