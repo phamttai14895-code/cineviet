@@ -199,18 +199,18 @@ export default function FeaturedCarousel({ items }) {
                 <div className="featured-hero-overlay" />
                 <div className="featured-hero-overlay-bottom" aria-hidden />
                 <div className="featured-hero-content container">
-                  <div className="featured-hero-badges">
-                    <span className="featured-hero-badge featured-hero-badge-main">
-                      <i className="fas fa-film" aria-hidden /> Phim nổi bật
-                    </span>
-                    {m.release_year && <span className="featured-hero-badge featured-hero-badge-year">{m.release_year}</span>}
-                    {m.rating != null && Number(m.rating) > 0 && (
-                      <span className="featured-hero-badge featured-hero-badge-rating">
-                        <i className="fas fa-star" aria-hidden /> {Number(m.rating).toFixed(1)}
-                      </span>
-                    )}
-                  </div>
                   <div className="featured-hero-left">
+                    <div className="featured-hero-badges">
+                      <span className="featured-hero-badge featured-hero-badge-main">
+                        <i className="fas fa-film" aria-hidden /> Phim nổi bật
+                      </span>
+                      {m.release_year && <span className="featured-hero-badge featured-hero-badge-year">{m.release_year}</span>}
+                      {m.rating != null && Number(m.rating) > 0 && (
+                        <span className="featured-hero-badge featured-hero-badge-rating">
+                          <i className="fas fa-star" aria-hidden /> {Number(m.rating).toFixed(1)}
+                        </span>
+                      )}
+                    </div>
                     <h2 className="featured-hero-title">{toTitleCase(m.title)}</h2>
                     {m.title_en && <p className="featured-hero-subtitle featured-hero-subtitle-accent">{toTitleCase(m.title_en)}</p>}
                     <div className="featured-hero-meta">

@@ -936,12 +936,17 @@ async function importMovieBySlug(slug) {
 
   let directorStr = crawled.director && typeof crawled.director === 'string' ? crawled.director.trim() : '';
   let castArr = Array.isArray(crawled.cast)
-    ? crawled.cast.map((c) => (typeof c === 'object' && c && c.name ? { name: String(c.name).trim() } : { name: String(c).trim() })).filter((c) => c.name)
+    ? crawled.cast.map((c) => {
+        const name = (typeof c === 'object' && c && c.name != null ? String(c.name) : String(c)).trim();
+        const id = typeof c === 'object' && c && c.id != null && !Number.isNaN(Number(c.id)) ? Number(c.id) : null;
+        return name ? (id != null ? { id, name } : { name }) : null;
+      }).filter(Boolean)
     : [];
 
   const movieType = (crawled.type === 'series' || crawled.type === 'anime' || crawled.type === 'tvshows') ? crawled.type : 'movie';
   let tmdbId = crawled.tmdb_id && (Number(crawled.tmdb_id) || String(crawled.tmdb_id));
   let creditsType = (movieType === 'tvshows' || movieType === 'series') ? 'tv' : 'movie';
+  // TMDB: dùng tmdb_id từ KKPhim (PhimAPI) hoặc tìm theo tên phim để lấy credits (đạo diễn + diễn viên có id)
   if (!tmdbId && process.env.TMDB_API_KEY && crawled.title) {
     const found = await searchTmdbByTitle(crawled.title, crawled.release_year, movieType);
     if (found && found.id) {
@@ -1017,7 +1022,7 @@ async function importMovieBySlug(slug) {
   }
 
   const directorFinal = directorStr || null;
-  castArr.forEach((c) => ensureActor(db, c.name));
+  castArr.forEach((c) => ensureActor(db, c.name, null, c.id != null ? { tmdb_id: c.id } : undefined));
   if (directorFinal) directorFinal.split(',').map((s) => s.trim()).filter(Boolean).forEach((d) => ensureDirector(db, d));
   const castJson = JSON.stringify(castArr);
 
@@ -1123,21 +1128,21 @@ function getCrawlAutoSettings() {
     page_from: Math.max(1, parseInt(o.crawl_auto_page_from, 10) || 1),
     page_to: Math.max(1, Math.min(CRAWL_MAX_PAGES, parseInt(o.crawl_auto_page_to, 10) || 1)),
     crawl_to_end: o.crawl_auto_to_end === '1',
-    category: (o.crawl_auto_category || '').trim() || null,
-    country: (o.crawl_auto_country || '').trim() || null,
+    exclude_genres: parseJsonArray(o.crawl_auto_exclude_genres),
+    exclude_countries: parseJsonArray(o.crawl_auto_exclude_countries),
   };
+}
+function parseJsonArray(str) {
+  if (!str || typeof str !== 'string') return [];
+  try {
+    const a = JSON.parse(str);
+    return Array.isArray(a) ? a.filter((x) => x != null && String(x).trim()) : [];
+  } catch {
+    return [];
+  }
 }
 
 function setCrawlAutoSettings(data) {
-  const keys = [
-    'crawl_auto_enabled',
-    'crawl_auto_interval_minutes',
-    'crawl_auto_sources',
-    'crawl_auto_page_from',
-    'crawl_auto_page_to',
-    'crawl_auto_category',
-    'crawl_auto_country',
-  ];
   const stmt = db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)');
   if (data.enabled !== undefined) stmt.run('crawl_auto_enabled', data.enabled ? '1' : '0');
   if (data.interval_minutes !== undefined) stmt.run('crawl_auto_interval_minutes', String(data.interval_minutes));
@@ -1145,8 +1150,8 @@ function setCrawlAutoSettings(data) {
   if (data.page_from !== undefined) stmt.run('crawl_auto_page_from', String(data.page_from));
   if (data.page_to !== undefined) stmt.run('crawl_auto_page_to', String(data.page_to));
   if (data.crawl_to_end !== undefined) stmt.run('crawl_auto_to_end', data.crawl_to_end ? '1' : '0');
-  if (data.category !== undefined) stmt.run('crawl_auto_category', data.category || '');
-  if (data.country !== undefined) stmt.run('crawl_auto_country', data.country || '');
+  if (data.exclude_genres !== undefined) stmt.run('crawl_auto_exclude_genres', JSON.stringify(Array.isArray(data.exclude_genres) ? data.exclude_genres : []));
+  if (data.exclude_countries !== undefined) stmt.run('crawl_auto_exclude_countries', JSON.stringify(Array.isArray(data.exclude_countries) ? data.exclude_countries : []));
 }
 
 router.get('/crawl/auto-settings', (req, res) => {
@@ -1159,16 +1164,16 @@ router.get('/crawl/logs', (req, res) => {
   res.json({ logs: entries });
 });
 
-// Chạy job crawl (dùng cho POST /crawl/run và auto-crawl). crawlToEnd=true: lặp đến khi gặp trang rỗng (tối đa CRAWL_MAX_PAGES).
-export async function runCrawlJob(sources, pageFrom, pageTo, category, country, crawlToEnd = false) {
+// Chạy job crawl (dùng cho POST /crawl/run và auto-crawl). excludeGenres/excludeCountries: bỏ qua phim thuộc các thể loại/quốc gia đã chọn.
+export async function runCrawlJob(sources, pageFrom, pageTo, excludeGenres, excludeCountries, crawlToEnd = false) {
   const src = Array.isArray(sources) ? sources.filter((s) => SOURCES.includes(s)) : [...SOURCES];
   let pFrom = Math.max(1, parseInt(pageFrom, 10) || 1);
   let pTo = crawlToEnd ? CRAWL_MAX_PAGES : Math.max(1, Math.min(CRAWL_MAX_PAGES, parseInt(pageTo, 10) || 1));
   if (!crawlToEnd && pTo < pFrom) pTo = pFrom;
-  const cat = (category || '').trim() || null;
-  const ctry = (country || '').trim() || null;
+  const exclGenres = Array.isArray(excludeGenres) ? excludeGenres.map((s) => String(s).trim().toLowerCase()).filter(Boolean) : [];
+  const exclCountries = Array.isArray(excludeCountries) ? excludeCountries.map((s) => String(s).trim().toLowerCase()).filter(Boolean) : [];
 
-  crawlLogger.logInfo(`Crawl bắt đầu — nguồn: ${src.join(', ')}${crawlToEnd ? ', crawl đến hết trang' : `, trang ${pFrom}–${pTo}`}${cat ? `, thể loại: ${cat}` : ''}${ctry ? `, quốc gia: ${ctry}` : ''}`, { sources: src, pageFrom: pFrom, pageTo: crawlToEnd ? 'end' : pTo });
+  crawlLogger.logInfo(`Crawl bắt đầu — nguồn: ${src.join(', ')}${crawlToEnd ? ', crawl đến hết trang' : `, trang ${pFrom}–${pTo}`}${exclGenres.length ? `, bỏ qua thể loại: ${exclGenres.join(', ')}` : ''}${exclCountries.length ? `, bỏ qua quốc gia: ${exclCountries.join(', ')}` : ''}`, { sources: src, pageFrom: pFrom, pageTo: crawlToEnd ? 'end' : pTo });
 
   const slugSet = new Set();
   for (const source of src) {
@@ -1180,13 +1185,15 @@ export async function runCrawlJob(sources, pageFrom, pageTo, category, country, 
         for (const it of items) {
           const slug = it?.slug;
           if (!slug || typeof slug !== 'string') continue;
-          if (cat) {
+          if (exclGenres.length) {
             const cats = it.category || [];
-            if (!Array.isArray(cats) || !cats.some((c) => (c?.slug || '').toLowerCase() === cat.toLowerCase())) continue;
+            const itemSlugs = Array.isArray(cats) ? cats.map((c) => (c?.slug || (c?.name && String(c.name).toLowerCase().replace(/\s+/g, '-')) || '').toLowerCase()).filter(Boolean) : [];
+            if (itemSlugs.some((s) => exclGenres.includes(s))) continue;
           }
-          if (ctry) {
+          if (exclCountries.length) {
             const countries = it.country || [];
-            if (!Array.isArray(countries) || !countries.some((c) => (typeof c === 'object' && c?.slug ? c.slug : String(c)).toLowerCase() === ctry.toLowerCase())) continue;
+            const itemCountrySlugs = Array.isArray(countries) ? countries.map((c) => (typeof c === 'object' ? (c?.slug || (c?.name && String(c.name).toLowerCase().replace(/\s+/g, '-')) || '') : String(c)).toLowerCase()).filter(Boolean) : [];
+            if (itemCountrySlugs.some((s) => exclCountries.includes(s))) continue;
           }
           slugSet.add(slug);
         }
@@ -1229,7 +1236,7 @@ export function startAutoCrawlTimer() {
   autoCrawlTimerId = setInterval(() => {
     const cfg = getCrawlAutoSettings();
     if (!cfg.enabled) return;
-    runCrawlJob(cfg.sources, cfg.page_from, cfg.page_to, cfg.category, cfg.country, cfg.crawl_to_end)
+    runCrawlJob(cfg.sources, cfg.page_from, cfg.page_to, cfg.exclude_genres, cfg.exclude_countries, cfg.crawl_to_end)
       .then((r) => console.log('[AutoCrawl]', r.total, 'slugs, created:', r.created, 'updated:', r.updated, 'failed:', r.failed))
       .catch((e) => console.error('[AutoCrawl]', e));
   }, ms);
@@ -1244,8 +1251,10 @@ router.post('/crawl/run', async (req, res) => {
   let pageTo = Math.max(1, Math.min(CRAWL_MAX_PAGES, parseInt(body.page_to, 10) || 1));
   if (pageTo < pageFrom) pageTo = pageFrom;
   const crawlToEnd = body.crawl_to_end === true || body.crawl_to_end === '1';
+  const excludeGenres = Array.isArray(body.exclude_genres) ? body.exclude_genres : [];
+  const excludeCountries = Array.isArray(body.exclude_countries) ? body.exclude_countries : [];
   try {
-    const result = await runCrawlJob(sources, pageFrom, pageTo, body.category, body.country, crawlToEnd);
+    const result = await runCrawlJob(sources, pageFrom, pageTo, excludeGenres, excludeCountries, crawlToEnd);
     res.json(result);
   } catch (err) {
     const errMsg = err?.message ?? String(err);

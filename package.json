@@ -5,11 +5,12 @@
   "scripts": {
     "dev": "concurrently \"npm run server\" \"npm run client\"",
     "server": "cd backend && npm run dev",
-    "client": "cd frontend && npm run dev",
+    "client": "wait-on tcp:5000 && cd frontend && npm run dev",
     "build": "cd frontend && npm run build",
     "db:init": "cd backend && node scripts/initDb.js"
   },
   "devDependencies": {
-    "concurrently": "^8.2.2"
+    "concurrently": "^8.2.2",
+    "wait-on": "^8.0.1"
   }
 }

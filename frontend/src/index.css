@@ -3059,14 +3059,11 @@
 }
 
 .featured-hero-badges {
-  position: absolute;
-  top: clamp(var(--space-md), 3vw, var(--space-xl));
-  left: clamp(var(--space-lg), 4vw, var(--space-2xl));
-  right: auto;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 0.5rem;
+  margin-bottom: 0.5rem;
 }
 
 .featured-hero-badge {
@@ -3555,20 +3552,21 @@
   top: 50%;
   transform: translateY(-50%);
   z-index: 2;
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   margin: 0;
   padding: 0;
   border-radius: 50%;
   border: 2px solid var(--border);
-  background: rgba(0, 0, 0, 0.5);
+  background: var(--card);
   color: var(--text);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.9rem;
-  transition: background var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast);
+  font-size: 1rem;
+  box-shadow: var(--shadow-sm);
+  transition: background var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast), box-shadow var(--transition-fast);
 }
 
 .new-movies-carousel-arrow i {
@@ -3577,9 +3575,14 @@
 }
 
 .new-movies-carousel-arrow:hover {
-  background: var(--accent-soft);
+  background: var(--card-hover);
   border-color: var(--accent);
   color: var(--accent);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme='light'] .new-movies-carousel-arrow:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
 }
 
 .new-movies-carousel-prev {

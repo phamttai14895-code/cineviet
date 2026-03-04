@@ -267,7 +267,7 @@ Restart backend sau khi sửa.
 
 ---
 
-#### 4.3.6 Các API khác (TMDB, OMDB, OpenAI)
+#### 4.3.6 Các API khác (TMDB, OMDB, AI gợi ý phim)
 
 **Ở đâu cấu hình:** **Backend** — file `backend/.env`.
 
@@ -275,9 +275,17 @@ Restart backend sau khi sửa.
 |-----------|-----------------|--------------------|
 | TMDB (cast, ảnh khi crawl) | `TMDB_API_KEY` | [themoviedb.org/settings/api](https://www.themoviedb.org/settings/api) |
 | OMDb (IMDb khi TMDB thiếu) | `OMDB_API_KEY` | [omdbapi.com/apikey.aspx](https://www.omdbapi.com/apikey.aspx) |
-| OpenAI (trang AI gợi ý phim) | `OPENAI_API_KEY` | [platform.openai.com/api-keys](https://platform.openai.com/api-keys) |
+| **AI gợi ý phim (chọn một hãng)** | | |
+| Hãng AI | `AI_PROVIDER` | `openai` (mặc định) hoặc `gemini`. |
+| OpenAI (ChatGPT) | `OPENAI_API_KEY` | [platform.openai.com/api-keys](https://platform.openai.com/api-keys). Kèm `OPENAI_MODEL` (mặc định `gpt-4o-mini`). |
+| Google (Gemini) | `GEMINI_API_KEY` | [aistudio.google.com/apikey](https://aistudio.google.com/apikey). Kèm `GEMINI_MODEL` (mặc định `gemini-1.5-flash`). |
 
-Để trống thì tính năng tương ứng không dùng (vd. không gọi OpenAI thì trang gợi ý phim vẫn mở nhưng không trả lời).
+**Nên dùng hãng AI nào cho tính năng gợi ý / hỏi đáp phim?**
+
+- **Google Gemini** (`AI_PROVIDER=gemini`, `GEMINI_API_KEY`): free tier rộng, tiếng Việt tốt, ổn cho production. Gợi ý dùng nếu muốn tiết kiệm chi phí hoặc không dùng OpenAI.
+- **OpenAI** (`OPENAI_API_KEY`, mặc định nếu không set `AI_PROVIDER=gemini`): API ổn định, chất lượng tốt; trả phí theo token. Phù hợp nếu bạn đã có sẵn tài khoản OpenAI.
+
+Chỉ cần cấu hình **một** trong hai: OpenAI hoặc Gemini. Để trống cả hai thì trang gợi ý phim vẫn mở nhưng không gọi AI (chỉ gợi ý theo bộ lọc).
 
 ---
 

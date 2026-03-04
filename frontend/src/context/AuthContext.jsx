@@ -20,7 +20,12 @@ export function AuthProvider({ children }) {
     }
     try {
       const { data } = await authApi.me();
-      setUser(data);
+      if (data && data.id) {
+        setUser(data);
+      } else {
+        localStorage.removeItem('token');
+        setUser(null);
+      }
     } catch {
       localStorage.removeItem('token');
       setUser(null);

@@ -18,7 +18,11 @@ async function fetchJson(url) {
     clearTimeout(id);
     if (!res.ok) {
       const text = await res.text().catch(() => '');
-      throw new Error(`Nguồn phim trả lỗi ${res.status}: ${text.slice(0, 100) || res.statusText}`);
+      const status = res.status;
+      if (status === 524 || status === 520 || status === 522 || status === 523) {
+        throw new Error(`Nguồn phim phản hồi quá chậm hoặc tạm lỗi (${status}). Thử lại sau vài phút.`);
+      }
+      throw new Error(`Nguồn phim trả lỗi ${status}: ${text.slice(0, 100) || res.statusText}`);
     }
     const text = await res.text();
     if (!text) throw new Error('Nguồn phim trả nội dung rỗng');

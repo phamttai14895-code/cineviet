@@ -123,11 +123,11 @@ router.get(
   }
 );
 
-// Get current user (JWT)
+// Get current user (JWT). Returns 200 + null when no/invalid token so session check doesn't trigger 401 in console.
 router.get('/me', (req, res, next) => {
   passport.authenticate('jwt', { session: false }, (err, user) => {
     if (err) return next(err);
-    if (!user) return res.status(401).json({ error: 'Unauthorized' });
+    if (!user) return res.status(200).json(null);
     res.json(user);
   })(req, res, next);
 });

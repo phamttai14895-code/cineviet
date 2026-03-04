@@ -1,16 +1,62 @@
 import db from '../config/db.js';
 
-let _openaiClient = null;
-async function getOpenAIClient() {
-  if (_openaiClient !== null) return _openaiClient;
-  if (!process.env.OPENAI_API_KEY) return null;
-  try {
-    const { default: OpenAI } = await import('openai');
-    _openaiClient = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-    return _openaiClient;
-  } catch {
-    return null;
+/**
+ * Chọn hãng AI: openai (ChatGPT) hoặc gemini (Google).
+ * - openai: cần OPENAI_API_KEY; model qua OPENAI_MODEL (mặc định gpt-4o-mini).
+ * - gemini: cần GEMINI_API_KEY; model qua GEMINI_MODEL (mặc định gemini-1.5-flash).
+ * Ưu tiên: AI_PROVIDER=gemini + GEMINI_API_KEY → Gemini; ngược lại OPENAI_API_KEY → OpenAI.
+ */
+const AI_PROVIDER = (process.env.AI_PROVIDER || 'openai').toLowerCase();
+const OPENAI_MODEL = process.env.OPENAI_MODEL || 'gpt-4o-mini';
+const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-1.5-flash';
+
+let _aiClient = null;
+
+/** Trả về client có method complete(prompt, { temperature }) => Promise<string>, hoặc null nếu không cấu hình. */
+async function getAiClient() {
+  if (_aiClient !== null) return _aiClient;
+
+  if ((AI_PROVIDER === 'gemini' && process.env.GEMINI_API_KEY) || (!process.env.OPENAI_API_KEY && process.env.GEMINI_API_KEY)) {
+    try {
+      const { GoogleGenAI } = await import('@google/genai');
+      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+      _aiClient = {
+        complete: async (prompt, { temperature = 0.5 } = {}) => {
+          const res = await ai.models.generateContent({
+            model: GEMINI_MODEL,
+            contents: prompt,
+            config: { temperature },
+          });
+          return (res?.text || '').trim();
+        },
+      };
+      return _aiClient;
+    } catch (e) {
+      console.error('Gemini init error:', e?.message);
+    }
   }
+
+  if (process.env.OPENAI_API_KEY) {
+    try {
+      const { default: OpenAI } = await import('openai');
+      const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+      _aiClient = {
+        complete: async (prompt, { temperature = 0.5 } = {}) => {
+          const completion = await openai.chat.completions.create({
+            model: OPENAI_MODEL,
+            messages: [{ role: 'user', content: prompt }],
+            temperature,
+          });
+          return (completion.choices[0]?.message?.content || '').trim();
+        },
+      };
+      return _aiClient;
+    } catch (e) {
+      console.error('OpenAI init error:', e?.message);
+    }
+  }
+
+  return null;
 }
 
 const MOVIE_CATALOG_LIMIT = 250;
@@ -122,20 +168,15 @@ export async function getAiSuggestions(opts) {
   const catalog = getMovieCatalog();
   if (catalog.length === 0) return [];
 
-  const openai = await getOpenAIClient();
-  if (!openai) {
+  const client = await getAiClient();
+  if (!client) {
     return fallbackSuggest(catalog, opts);
   }
 
   const genreName = opts.genreId && opts.genres?.find((g) => String(g.id) === String(opts.genreId))?.name;
   const prompt = buildSuggestPrompt(catalog, { ...opts, genreName });
   try {
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
-      messages: [{ role: 'user', content: prompt }],
-      temperature: 0.5,
-    });
-    const text = completion.choices[0]?.message?.content?.trim() || '';
+    const text = await client.complete(prompt, { temperature: 0.5 });
     const ids = parseIdsFromResponse(text);
     const validIds = catalog.map((m) => m.id);
     return ids.filter((id) => validIds.includes(id)).slice(0, 24);
@@ -147,16 +188,14 @@ export async function getAiSuggestions(opts) {
 
 /**
  * Viết lại/dịch nội dung phim sang tiếng Việt (dùng khi crawl phim).
- * - Nếu nội dung chủ yếu tiếng Anh → dịch sang tiếng Việt.
- * - Viết lại đoạn văn 150–300 từ, rõ ràng, hấp dẫn.
- * Dùng chung OpenAI với AI gợi ý (getOpenAIClient).
+ * Dùng AI đã cấu hình (OpenAI hoặc Gemini).
  */
 export async function rewriteMovieDescription(description, title) {
   const raw = (description || '').trim();
   if (!raw) return '';
 
-  const openai = await getOpenAIClient();
-  if (!openai) return raw;
+  const client = await getAiClient();
+  if (!client) return raw;
 
   const titlePart = title ? `Tên phim: ${title}.` : '';
   const prompt = `Bạn là trợ lý biên tập nội dung phim. Nhiệm vụ:
@@ -174,12 +213,7 @@ ${raw.slice(0, 3000)}
 Chỉ trả lời bằng đoạn văn tiếng Việt (150–300 từ), không thêm gì khác.`;
 
   try {
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
-      messages: [{ role: 'user', content: prompt }],
-      temperature: 0.4,
-    });
-    const text = completion.choices[0]?.message?.content?.trim() || '';
+    const text = await client.complete(prompt, { temperature: 0.4 });
     return text || raw;
   } catch (err) {
     console.error('rewriteMovieDescription error:', err.message);
@@ -191,30 +225,37 @@ export async function askAi(question, genres) {
   const catalog = getMovieCatalog();
   if (!question || !question.trim()) return { answer: 'Bạn hãy nhập câu hỏi về phim.', movieIds: [] };
 
-  const openai = await getOpenAIClient();
-  if (!openai) {
+  const client = await getAiClient();
+  if (!client) {
     const ids = fallbackSuggest(catalog, {});
     return {
-      answer: 'Tính năng AI đang tạm thời. Dưới đây là một số phim gợi ý từ kho của chúng tôi. Để dùng gợi ý bằng ChatGPT, cài package openai (npm install openai) và cấu hình OPENAI_API_KEY ở server.',
+      answer: 'Tính năng AI đang tạm thời. Dưới đây là một số phim gợi ý từ kho của chúng tôi. Cấu hình OPENAI_API_KEY (OpenAI) hoặc GEMINI_API_KEY (Google AI) trong backend/.env.',
       movieIds: ids.slice(0, 8),
     };
   }
 
   const prompt = buildAskPrompt(catalog, question.trim());
   try {
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
-      messages: [{ role: 'user', content: prompt }],
-      temperature: 0.6,
-    });
-    const text = completion.choices[0]?.message?.content?.trim() || '';
+    const text = await client.complete(prompt, { temperature: 0.6 });
     const movieIds = parseIdsFromResponse(text);
     const validIds = new Set(catalog.map((m) => m.id));
     const ids = movieIds.filter((id) => validIds.has(id)).slice(0, 12);
     const answer = text.replace(/\{\s*"ids"\s*:\s*\[[^\]]*\]\s*\}/, '').trim();
     return { answer: answer || 'Đã xử lý câu hỏi của bạn.', movieIds: ids };
   } catch (err) {
-    console.error('AI ask error:', err.message);
-    return { answer: 'Không thể xử lý câu hỏi lúc này. Bạn thử lại sau nhé.', movieIds: [] };
+    const status = err?.status ?? err?.response?.status;
+    const code = err?.code ?? err?.response?.data?.error?.code;
+    console.error('AI ask error:', err.message, status ? `status=${status}` : '', code ? `code=${code}` : '');
+    const fallbackIds = fallbackSuggest(catalog, {});
+    const hint =
+      status === 429
+        ? 'Lượt gọi AI tạm hết. Thử lại sau vài phút.'
+        : status >= 500
+          ? 'Dịch vụ AI đang bận. Thử lại sau.'
+          : 'Không thể xử lý câu hỏi lúc này. Bạn thử lại sau nhé.';
+    return {
+      answer: `${hint} Dưới đây là một số phim gợi ý từ kho của chúng tôi.`,
+      movieIds: fallbackIds.slice(0, 8),
+    };
   }
 }

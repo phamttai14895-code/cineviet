@@ -8,7 +8,6 @@ import { useAdSettings, AdBanner } from '../components/AdZones';
 import { getApiBase } from '../context/PublicSettingsContext';
 import HomeTrendingBlock from '../components/HomeTrendingBlock';
 import Top10Carousel from '../components/Top10Carousel';
-import UpcomingCarousel from '../components/UpcomingCarousel';
 import NewMoviesCarousel from '../components/NewMoviesCarousel';
 
 const SECTION_SIZE = 6;
@@ -26,7 +25,6 @@ export default function Home() {
   const [tvShows, setTvShows] = useState([]);
   const [chieuRap, setChieuRap] = useState([]);
   const [top10Movies, setTop10Movies] = useState([]);
-  const [upcomingMovies, setUpcomingMovies] = useState([]);
   const [loading, setLoading] = useState(true);
   const [sectionLimit, setSectionLimit] = useState(getSectionLimit);
   const adSettings = useAdSettings();
@@ -54,7 +52,6 @@ export default function Home() {
           moviesApi.list({ type: 'tvshows', limit: 14 }),
           moviesApi.list({ chieu_rap: 1, sort: 'created_at', order: 'desc', limit: 14 }),
           moviesApi.list({ sort: 'view_count_day', order: 'desc', limit: 10 }),
-          moviesApi.list({ upcoming: 1, limit: 20, sort: 'release_year', order: 'asc' }),
         ]);
         const getMovies = (r) => (r.status === 'fulfilled' && r.value?.data?.movies) ? r.value.data.movies : [];
         setFeatured(getMovies(results[0]));
@@ -65,7 +62,6 @@ export default function Home() {
         setTvShows(getMovies(results[5]));
         setChieuRap(getMovies(results[6]));
         setTop10Movies(getMovies(results[7]));
-        setUpcomingMovies(getMovies(results[8]));
       } catch (e) {
         console.error(e);
       } finally {
@@ -82,10 +78,6 @@ export default function Home() {
   const top10Display = useMemo(
     () => (sectionLimit ? top10Movies.slice(0, sectionLimit) : top10Movies),
     [top10Movies, sectionLimit]
-  );
-  const upcomingDisplay = useMemo(
-    () => (sectionLimit ? upcomingMovies.slice(0, sectionLimit) : upcomingMovies),
-    [upcomingMovies, sectionLimit]
   );
 
   if (loading) {
@@ -239,9 +231,6 @@ export default function Home() {
 
       {/* Top 10 phim xem nhiều nhất — carousel */}
       <Top10Carousel movies={top10Display} title="Top 10 Phim Xem Trong Ngày" />
-
-      {/* Phim Sắp Tới */}
-      <UpcomingCarousel movies={upcomingDisplay} />
     </div>
   );
 }

@@ -17,8 +17,8 @@ export default function AdminCrawl() {
   const [pageFrom, setPageFrom] = useState(1);
   const [pageTo, setPageTo] = useState(3);
   const [crawlToEnd, setCrawlToEnd] = useState(false);
-  const [category, setCategory] = useState('');
-  const [country, setCountry] = useState('');
+  const [excludeGenres, setExcludeGenres] = useState([]);
+  const [excludeCountries, setExcludeCountries] = useState([]);
   const [genres, setGenres] = useState([]);
   const [countries, setCountries] = useState([]);
   const [loadingMeta, setLoadingMeta] = useState(true);
@@ -31,10 +31,11 @@ export default function AdminCrawl() {
     page_from: 1,
     page_to: 2,
     crawl_to_end: false,
-    category: '',
-    country: '',
+    exclude_genres: [],
+    exclude_countries: [],
   });
   const [savingAuto, setSavingAuto] = useState(false);
+  const [autoSettingsLoading, setAutoSettingsLoading] = useState(true);
   const [crawlLogs, setCrawlLogs] = useState([]);
   const [logsLoading, setLogsLoading] = useState(true);
   const logsBoxRef = useRef(null);
@@ -42,6 +43,17 @@ export default function AdminCrawl() {
   const [syncActorsMessage, setSyncActorsMessage] = useState('');
   const [tmdbTotalIds, setTmdbTotalIds] = useState(null);
   const syncActorsTimerRef = useRef(null);
+
+  const fetchAutoSettings = () => {
+    setAutoSettingsLoading(true);
+    admin
+      .crawlAutoSettings()
+      .then((r) => {
+        if (r?.data && typeof r.data === 'object') setAutoSettings(r.data);
+      })
+      .catch(console.error)
+      .finally(() => setAutoSettingsLoading(false));
+  };
 
   useEffect(() => {
     Promise.all([crawl.genres(), crawl.countries()])
@@ -54,7 +66,13 @@ export default function AdminCrawl() {
   }, []);
 
   useEffect(() => {
-    admin.crawlAutoSettings().then((r) => setAutoSettings(r.data)).catch(console.error);
+    fetchAutoSettings();
+  }, []);
+
+  useEffect(() => {
+    const onFocus = () => fetchAutoSettings();
+    window.addEventListener('focus', onFocus);
+    return () => window.removeEventListener('focus', onFocus);
   }, []);
 
   const fetchTmdbStats = () => {
@@ -105,8 +123,8 @@ export default function AdminCrawl() {
         page_from: pageFrom,
         page_to: crawlToEnd ? 0 : pageTo,
         crawl_to_end: crawlToEnd,
-        category: category || undefined,
-        country: country || undefined,
+        exclude_genres: excludeGenres,
+        exclude_countries: excludeCountries,
       });
       setResult(res.data);
     } catch (err) {
@@ -130,11 +148,16 @@ export default function AdminCrawl() {
         const updated = d.updated ?? 0;
         const errors = d.errors ?? 0;
         const done = total > 0 && updated + errors >= total;
-        const msg = d.error
-          ? d.error
-          : (done
-            ? `Đã lấy đủ: ${updated} cập nhật, ${errors} lỗi — tổng ${total} ID TMDB đã xử lý hết.`
-            : `Đã đồng bộ: ${updated} diễn viên${errors ? `, ${errors} lỗi` : ''}. Tổng ${total} ID TMDB. Chạy thêm lần nữa để xử lý nốt (tối đa 500/lần).`);
+        let msg = d.error;
+        if (!msg) {
+          if (total === 0) {
+            msg = 'Chưa có ID TMDB nào trong hệ thống. Cần crawl/import phim có cast từ TMDB (cấu hình TMDB_API_KEY và crawl nguồn có cast) thì mới có ID để đồng bộ.';
+          } else if (done) {
+            msg = `Đã lấy đủ: ${updated} cập nhật, ${errors} lỗi — tổng ${total} ID TMDB đã xử lý hết.`;
+          } else {
+            msg = `Đã đồng bộ: ${updated} diễn viên${errors ? `, ${errors} lỗi` : ''}. Tổng ${total} ID TMDB. Chạy thêm lần nữa để xử lý nốt (tối đa 500/lần).`;
+          }
+        }
         setSyncActorsMessage(msg);
         fetchTmdbStats();
         if (syncActorsTimerRef.current) clearTimeout(syncActorsTimerRef.current);
@@ -158,8 +181,8 @@ export default function AdminCrawl() {
         page_from: autoSettings.page_from,
         page_to: autoSettings.page_to,
         crawl_to_end: autoSettings.crawl_to_end,
-        category: autoSettings.category || '',
-        country: autoSettings.country || '',
+        exclude_genres: autoSettings.exclude_genres || [],
+        exclude_countries: autoSettings.exclude_countries || [],
       });
       setAutoSettings(res.data);
       toast.success('Đã lưu cấu hình auto.');
@@ -234,35 +257,45 @@ export default function AdminCrawl() {
                 <span>Crawl đến hết trang (toàn bộ phim KKPhim, tự dừng khi hết dữ liệu)</span>
               </label>
             </div>
-            <div className="admin-crawl-row">
-              <div className="admin-crawl-field">
-                <label>Lọc thể loại</label>
-                <select
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value)}
-                  className="admin-crawl-select"
-                  aria-label="Thể loại"
-                >
-                  <option value="">Tất cả</option>
-                  {(genres || []).map((g) => (
-                    <option key={g._id || g.slug} value={g.slug}>{g.name}</option>
-                  ))}
-                </select>
+            <div className="admin-crawl-field">
+              <label>Bỏ qua thể loại (không crawl phim thuộc các thể loại đã chọn)</label>
+              <div className="admin-crawl-checkboxes admin-crawl-checkboxes-wrap">
+                {(genres || []).map((g) => {
+                  const slug = g.slug || g._id || '';
+                  const checked = excludeGenres.includes(slug);
+                  return (
+                    <label key={slug || g.name} className="admin-crawl-check">
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={() => setExcludeGenres((prev) => (checked ? prev.filter((s) => s !== slug) : [...prev, slug]))}
+                      />
+                      <span>{g.name}</span>
+                    </label>
+                  );
+                })}
               </div>
-              <div className="admin-crawl-field">
-                <label>Lọc quốc gia</label>
-                <select
-                  value={country}
-                  onChange={(e) => setCountry(e.target.value)}
-                  className="admin-crawl-select"
-                  aria-label="Quốc gia"
-                >
-                  <option value="">Tất cả</option>
-                  {(countries || []).map((c) => (
-                    <option key={c._id || c.slug} value={c.slug}>{c.name}</option>
-                  ))}
-                </select>
+              {excludeGenres.length > 0 && <p className="admin-crawl-muted">Đã chọn {excludeGenres.length} thể loại bỏ qua.</p>}
+            </div>
+            <div className="admin-crawl-field">
+              <label>Bỏ qua quốc gia (không crawl phim thuộc các quốc gia đã chọn)</label>
+              <div className="admin-crawl-checkboxes admin-crawl-checkboxes-wrap">
+                {(countries || []).map((c) => {
+                  const slug = c.slug || c._id || '';
+                  const checked = excludeCountries.includes(slug);
+                  return (
+                    <label key={slug || c.name} className="admin-crawl-check">
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={() => setExcludeCountries((prev) => (checked ? prev.filter((s) => s !== slug) : [...prev, slug]))}
+                      />
+                      <span>{c.name}</span>
+                    </label>
+                  );
+                })}
               </div>
+              {excludeCountries.length > 0 && <p className="admin-crawl-muted">Đã chọn {excludeCountries.length} quốc gia bỏ qua.</p>}
             </div>
             {loadingMeta && <p className="admin-crawl-muted">Đang tải thể loại, quốc gia...</p>}
             <button
@@ -315,7 +348,8 @@ export default function AdminCrawl() {
           <p className="admin-crawl-muted">Lấy thông tin và ảnh diễn viên từ TMDB (GET /person/&#123;id&#125;, /person/&#123;id&#125;/images). Cần TMDB_API_KEY. Mỗi lần tối đa 500 người (đủ để đồng bộ hết nếu tổng ID &lt; 500).</p>
           {tmdbTotalIds !== null && (
             <p className="admin-crawl-muted" style={{ marginBottom: '0.5rem' }}>
-              Hiện có <strong>{tmdbTotalIds}</strong> ID TMDB trong hệ thống (từ diễn viên + cast phim). Đã lấy đủ khi: số cập nhật + lỗi = tổng ID sau mỗi lần chạy.
+              Hiện có <strong>{tmdbTotalIds}</strong> ID TMDB trong hệ thống (từ bảng diễn viên có tmdb_id + cast của từng phim). Đã lấy đủ khi: số cập nhật + lỗi = tổng ID sau mỗi lần chạy.
+              {tmdbTotalIds === 0 && ' Để có ID: cấu hình TMDB_API_KEY và crawl/import phim từ nguồn có dữ liệu cast TMDB.'}
             </p>
           )}
           <button
@@ -342,6 +376,11 @@ export default function AdminCrawl() {
             <i className="fas fa-clock" /> Auto crawl
           </h2>
           <p className="admin-crawl-muted">Tự động chạy crawl theo thời gian đặt. Lưu cấu hình để áp dụng.</p>
+          {autoSettingsLoading && (
+            <p className="admin-crawl-muted" style={{ marginBottom: '0.5rem' }}>
+              <i className="fas fa-spinner fa-spin" aria-hidden /> Đang tải cấu hình…
+            </p>
+          )}
           <div className="admin-crawl-form">
             <div className="admin-crawl-field admin-crawl-toggle-row">
               <label className="admin-crawl-switch">
@@ -349,6 +388,7 @@ export default function AdminCrawl() {
                   type="checkbox"
                   checked={autoSettings.enabled}
                   onChange={(e) => setAutoSettings((a) => ({ ...a, enabled: e.target.checked }))}
+                  disabled={autoSettingsLoading}
                 />
                 <span className="admin-crawl-slider" />
               </label>
@@ -421,6 +461,54 @@ export default function AdminCrawl() {
                   </label>
                 ))}
               </div>
+            </div>
+            <div className="admin-crawl-field">
+              <label>Bỏ qua thể loại (auto crawl không lấy phim thuộc các thể loại đã chọn)</label>
+              <div className="admin-crawl-checkboxes admin-crawl-checkboxes-wrap">
+                {(genres || []).map((g) => {
+                  const slug = g.slug || g._id || '';
+                  const checked = (autoSettings.exclude_genres || []).includes(slug);
+                  return (
+                    <label key={slug || g.name} className="admin-crawl-check">
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={() => {
+                          const prev = autoSettings.exclude_genres || [];
+                          const next = checked ? prev.filter((s) => s !== slug) : [...prev, slug];
+                          setAutoSettings((a) => ({ ...a, exclude_genres: next }));
+                        }}
+                      />
+                      <span>{g.name}</span>
+                    </label>
+                  );
+                })}
+              </div>
+              {(autoSettings.exclude_genres || []).length > 0 && <p className="admin-crawl-muted">Đã chọn {(autoSettings.exclude_genres || []).length} thể loại bỏ qua.</p>}
+            </div>
+            <div className="admin-crawl-field">
+              <label>Bỏ qua quốc gia (auto crawl không lấy phim thuộc các quốc gia đã chọn)</label>
+              <div className="admin-crawl-checkboxes admin-crawl-checkboxes-wrap">
+                {(countries || []).map((c) => {
+                  const slug = c.slug || c._id || '';
+                  const checked = (autoSettings.exclude_countries || []).includes(slug);
+                  return (
+                    <label key={slug || c.name} className="admin-crawl-check">
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={() => {
+                          const prev = autoSettings.exclude_countries || [];
+                          const next = checked ? prev.filter((s) => s !== slug) : [...prev, slug];
+                          setAutoSettings((a) => ({ ...a, exclude_countries: next }));
+                        }}
+                      />
+                      <span>{c.name}</span>
+                    </label>
+                  );
+                })}
+              </div>
+              {(autoSettings.exclude_countries || []).length > 0 && <p className="admin-crawl-muted">Đã chọn {(autoSettings.exclude_countries || []).length} quốc gia bỏ qua.</p>}
             </div>
             <button
               type="button"

@@ -271,6 +271,18 @@ export default function MovieDetail() {
         return true;
       });
   })();
+  /** Số tập thực sự có link (server đang chọn). Chỉ hiển thị các tập đã có link, tránh hiện tập 25–30 khi mới ra đến 24. */
+  const getMaxAvailableEpisodes = () => {
+    const server = episodesList[selectedServerIndex];
+    const data = server?.server_data || [];
+    let max = 0;
+    for (let i = 0; i < data.length; i++) {
+      const hasLink = !!(data[i]?.link_embed?.trim() || data[i]?.link_m3u8?.trim());
+      if (hasLink) max = i + 1;
+    }
+    return max > 0 ? max : totalEps;
+  };
+  const episodesToShow = getMaxAvailableEpisodes();
   const viewCount = movie.view_count != null ? Number(movie.view_count) : null;
   const updatedAt = movie.updated_at ? new Date(movie.updated_at).toLocaleDateString('vi-VN', { day: 'numeric', month: 'numeric', year: 'numeric' }) : null;
 
@@ -557,7 +569,7 @@ export default function MovieDetail() {
                   )}
                 </div>
                 <div className="movie-detail-episodes-list">
-                  {Array.from({ length: totalEps }, (_, i) => i + 1).map((ep) => (
+                  {Array.from({ length: episodesToShow }, (_, i) => i + 1).map((ep) => (
                     <Link
                       key={ep}
                       to={`/watch/${movie.id}?ep=${ep}${uniqueServers.length > 0 ? `&server=${selectedServerIndex}` : ''}`}

@@ -237,7 +237,16 @@ export function normalizePhimApi(apiResponse) {
     genres: (movie.category || []).map((c) => ({ id: c.id || c._id, name: c.name, slug: c.slug })),
     countries: (movie.country || []).map((c) => ({ id: c.id || c._id, name: c.name, slug: c.slug })),
     director: Array.isArray(movie.director) ? movie.director.filter(Boolean).join(', ') : (movie.director || null),
-    cast: Array.isArray(movie.actor) ? movie.actor : (movie.actor ? [movie.actor] : []),
+    // cast: giữ id (TMDB person id) nếu PhimAPI trả về để đồng bộ diễn viên từ TMDB sau này
+    cast: (Array.isArray(movie.actor) ? movie.actor : (movie.actor ? [movie.actor] : [])).map((c) => {
+      if (typeof c === 'object' && c && c.name != null) {
+        const name = String(c.name).trim();
+        const id = c.id != null && !Number.isNaN(Number(c.id)) ? Number(c.id) : null;
+        return name ? (id != null ? { id, name } : { name }) : null;
+      }
+      const name = String(c).trim();
+      return name ? { name } : null;
+    }).filter(Boolean),
     tmdb_id: movie.tmdb_id ?? movie.tmdb ?? movie.movie_id ?? null,
     imdb_id: movie.imdb_id ?? null,
     episodes,
