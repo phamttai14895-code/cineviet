@@ -7,9 +7,10 @@ export default function AdminActors() {
   const [actors, setActors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [name, setName] = useState('');
+  const [selectedIds, setSelectedIds] = useState(new Set());
 
   const load = () => {
-    admin.actors().then((r) => setActors(r.data)).catch(console.error).finally(() => setLoading(false));
+    admin.actors().then((r) => setActors(Array.isArray(r.data) ? r.data : [])).catch(console.error).finally(() => setLoading(false));
   };
 
   useEffect(() => {
@@ -26,6 +27,53 @@ export default function AdminActors() {
       toast.success('Đã thêm diễn viên.');
     } catch (err) {
       toast.error(err.response?.data?.error || 'Có lỗi');
+    }
+  };
+
+  const toggleSelect = (id) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size >= actors.length) setSelectedIds(new Set());
+    else setSelectedIds(new Set(actors.map((a) => a.id)));
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.size === 0) {
+      toast.error('Chọn ít nhất một diễn viên để xóa.');
+      return;
+    }
+    if (!confirm(`Xóa ${selectedIds.size} diễn viên đã chọn?`)) return;
+    try {
+      await admin.deleteActorsBulk([...selectedIds]);
+      setSelectedIds(new Set());
+      load();
+      toast.success(`Đã xóa ${selectedIds.size} diễn viên.`);
+    } catch (e) {
+      toast.error(e.response?.data?.error || 'Không thể xóa');
+    }
+  };
+
+  const handleDeleteAll = async () => {
+    const confirmText = 'XÓA TẤT CẢ';
+    const entered = prompt(`Bạn sẽ xóa toàn bộ diễn viên (${actors.length} mục). Nhập "${confirmText}" để xác nhận:`);
+    if (entered !== confirmText) {
+      if (entered != null) toast.error('Xác nhận không đúng. Đã hủy.');
+      return;
+    }
+    try {
+      const res = await admin.deleteActorsAll();
+      setSelectedIds(new Set());
+      load();
+      toast.success(res?.data?.message || `Đã xóa ${res?.data?.deleted ?? 0} diễn viên.`);
+    } catch (e) {
+      toast.error(e.response?.data?.error || 'Không thể xóa toàn bộ');
     }
   };
 
@@ -48,11 +96,30 @@ export default function AdminActors() {
         <button type="submit" className="btn btn-primary">Thêm diễn viên</button>
       </form>
 
+      {(selectedIds.size > 0 || actors.length > 0) && (
+        <div className="admin-genres-actions" style={{ marginBottom: '1rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+          {selectedIds.size > 0 && (
+            <button type="button" className="btn btn-danger" onClick={handleBulkDelete}>
+              <i className="fas fa-trash" /> Xóa đã chọn ({selectedIds.size})
+            </button>
+          )}
+          <button type="button" className="btn btn-danger" onClick={handleDeleteAll}>
+            <i className="fas fa-trash-alt" /> Xóa toàn bộ
+          </button>
+        </div>
+      )}
+
       <div className="admin-genres-list">
+        {actors.length > 0 && (
+          <label className="admin-genre-chip" style={{ marginBottom: '0.5rem', cursor: 'pointer' }}>
+            <input type="checkbox" checked={selectedIds.size >= actors.length} onChange={toggleSelectAll} /> Chọn tất cả
+          </label>
+        )}
         {actors.map((a) => (
-          <div key={a.id} className="admin-genre-chip">
+          <label key={a.id} className="admin-genre-chip" style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
+            <input type="checkbox" checked={selectedIds.has(a.id)} onChange={() => toggleSelect(a.id)} />
             <span>{a.name}</span>
-          </div>
+          </label>
         ))}
       </div>
     </div>

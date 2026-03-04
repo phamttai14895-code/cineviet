@@ -119,6 +119,24 @@ export default function AdminMovies() {
     }
   };
 
+  const handleDeleteAll = async () => {
+    const confirmText = 'XÓA TẤT CẢ';
+    const entered = prompt(`Bạn sẽ xóa toàn bộ phim (${total} phim), bình luận, lịch sử xem và yêu thích liên quan. Nhập "${confirmText}" để xác nhận:`);
+    if (entered !== confirmText) {
+      if (entered != null) toast.error('Xác nhận không đúng. Đã hủy.');
+      return;
+    }
+    try {
+      const res = await admin.deleteAllMovies();
+      setSelectedIds(new Set());
+      load();
+      toast.success(res?.data?.message || `Đã xóa ${res?.data?.deleted ?? 0} phim.`);
+    } catch (e) {
+      console.error(e);
+      toast.error(e.response?.data?.error || 'Không thể xóa toàn bộ phim');
+    }
+  };
+
   const totalPages = Math.max(1, Math.ceil(total / limit));
   const maxViews = Math.max(1, ...movies.map((m) => m.view_count || 0));
 
@@ -174,6 +192,9 @@ export default function AdminMovies() {
               <i className="fas fa-trash" /> Xóa đã chọn ({selectedIds.size})
             </button>
           )}
+          <button type="button" className="btn btn-danger admin-movies-add" onClick={handleDeleteAll} title="Xóa toàn bộ phim trong hệ thống">
+            <i className="fas fa-trash-alt" /> Xóa toàn bộ phim
+          </button>
           <Link to="/admin/crawl" className="btn admin-movies-add admin-movies-crawl-btn">
             <i className="fas fa-cloud-download-alt" /> Crawl phim
           </Link>

@@ -518,6 +518,21 @@ router.post('/movies/bulk-delete', (req, res) => {
   res.json({ deleted: r.changes });
 });
 
+// Xóa toàn bộ phim (body: { confirm: true }). Xóa cả bình luận, lịch sử xem, yêu thích, báo cáo liên quan.
+router.post('/movies/delete-all', (req, res) => {
+  if (req.body?.confirm !== true) return res.status(400).json({ error: 'Cần gửi confirm: true để xóa toàn bộ phim' });
+  const count = db.prepare('SELECT COUNT(*) as n FROM movies').get();
+  const n = count?.n ?? 0;
+  if (n === 0) return res.json({ deleted: 0, message: 'Không có phim nào để xóa' });
+  db.prepare('DELETE FROM comments').run();
+  db.prepare('DELETE FROM watch_reports').run();
+  db.prepare('DELETE FROM watch_history').run();
+  db.prepare('DELETE FROM user_favorites').run();
+  db.prepare('DELETE FROM movie_genres').run();
+  const r = db.prepare('DELETE FROM movies').run();
+  res.json({ deleted: r.changes, message: `Đã xóa ${r.changes} phim` });
+});
+
 router.post(
   '/movies',
   upload.fields([{ name: 'poster', maxCount: 1 }, { name: 'backdrop', maxCount: 1 }]),
@@ -1259,6 +1274,20 @@ router.post('/genres', [body('name').trim().notEmpty()], (req, res) => {
   const r = db.prepare('INSERT INTO genres (name, slug) VALUES (?, ?)').run(req.body.name, slug);
   res.status(201).json(db.prepare('SELECT * FROM genres WHERE id = ?').get(r.lastInsertRowid));
 });
+router.post('/genres/bulk-delete', (req, res) => {
+  const ids = Array.isArray(req.body?.ids) ? req.body.ids.filter((id) => Number.isInteger(Number(id)) && Number(id) > 0) : [];
+  if (ids.length === 0) return res.status(400).json({ error: 'Thiếu danh sách id thể loại cần xóa' });
+  const placeholders = ids.map(() => '?').join(',');
+  db.prepare(`DELETE FROM movie_genres WHERE genre_id IN (${placeholders})`).run(...ids);
+  const r = db.prepare(`DELETE FROM genres WHERE id IN (${placeholders})`).run(...ids);
+  res.json({ deleted: r.changes });
+});
+router.post('/genres/delete-all', (req, res) => {
+  if (req.body?.confirm !== true) return res.status(400).json({ error: 'Cần gửi confirm: true để xóa toàn bộ thể loại' });
+  db.prepare('DELETE FROM movie_genres').run();
+  const r = db.prepare('DELETE FROM genres').run();
+  res.json({ deleted: r.changes });
+});
 
 // Countries CRUD (quốc gia)
 router.get('/countries', (req, res) => {
@@ -1272,6 +1301,18 @@ router.post('/countries', [body('name').trim().notEmpty()], (req, res) => {
   const r = db.prepare('INSERT INTO countries (name, slug) VALUES (?, ?)').run(req.body.name, slug);
   res.status(201).json(db.prepare('SELECT * FROM countries WHERE id = ?').get(r.lastInsertRowid));
 });
+router.post('/countries/bulk-delete', (req, res) => {
+  const ids = Array.isArray(req.body?.ids) ? req.body.ids.filter((id) => Number.isInteger(Number(id)) && Number(id) > 0) : [];
+  if (ids.length === 0) return res.status(400).json({ error: 'Thiếu danh sách id quốc gia cần xóa' });
+  const placeholders = ids.map(() => '?').join(',');
+  const r = db.prepare(`DELETE FROM countries WHERE id IN (${placeholders})`).run(...ids);
+  res.json({ deleted: r.changes });
+});
+router.post('/countries/delete-all', (req, res) => {
+  if (req.body?.confirm !== true) return res.status(400).json({ error: 'Cần gửi confirm: true để xóa toàn bộ quốc gia' });
+  const r = db.prepare('DELETE FROM countries').run();
+  res.json({ deleted: r.changes });
+});
 
 // Directors CRUD (đạo diễn; avatar từ TMDB nếu có)
 router.get('/directors', (req, res) => {
@@ -1284,6 +1325,18 @@ router.post('/directors', [body('name').trim().notEmpty()], (req, res) => {
   const r = db.prepare('INSERT INTO directors (name, slug) VALUES (?, ?)').run(req.body.name, slug);
   res.status(201).json(db.prepare('SELECT * FROM directors WHERE id = ?').get(r.lastInsertRowid));
 });
+router.post('/directors/bulk-delete', (req, res) => {
+  const ids = Array.isArray(req.body?.ids) ? req.body.ids.filter((id) => Number.isInteger(Number(id)) && Number(id) > 0) : [];
+  if (ids.length === 0) return res.status(400).json({ error: 'Thiếu danh sách id đạo diễn cần xóa' });
+  const placeholders = ids.map(() => '?').join(',');
+  const r = db.prepare(`DELETE FROM directors WHERE id IN (${placeholders})`).run(...ids);
+  res.json({ deleted: r.changes });
+});
+router.post('/directors/delete-all', (req, res) => {
+  if (req.body?.confirm !== true) return res.status(400).json({ error: 'Cần gửi confirm: true để xóa toàn bộ đạo diễn' });
+  const r = db.prepare('DELETE FROM directors').run();
+  res.json({ deleted: r.changes });
+});
 
 // Actors CRUD (diễn viên; avatar từ TMDB nếu có)
 router.get('/actors', (req, res) => {
@@ -1295,6 +1348,18 @@ router.post('/actors', [body('name').trim().notEmpty()], (req, res) => {
   const slug = slugify(req.body.name);
   const r = db.prepare('INSERT INTO actors (name, slug) VALUES (?, ?)').run(req.body.name, slug);
   res.status(201).json(db.prepare('SELECT * FROM actors WHERE id = ?').get(r.lastInsertRowid));
+});
+router.post('/actors/bulk-delete', (req, res) => {
+  const ids = Array.isArray(req.body?.ids) ? req.body.ids.filter((id) => Number.isInteger(Number(id)) && Number(id) > 0) : [];
+  if (ids.length === 0) return res.status(400).json({ error: 'Thiếu danh sách id diễn viên cần xóa' });
+  const placeholders = ids.map(() => '?').join(',');
+  const r = db.prepare(`DELETE FROM actors WHERE id IN (${placeholders})`).run(...ids);
+  res.json({ deleted: r.changes });
+});
+router.post('/actors/delete-all', (req, res) => {
+  if (req.body?.confirm !== true) return res.status(400).json({ error: 'Cần gửi confirm: true để xóa toàn bộ diễn viên' });
+  const r = db.prepare('DELETE FROM actors').run();
+  res.json({ deleted: r.changes });
 });
 
 // Số ID TMDB cần đồng bộ (từ bảng actors + cast trong phim) — để biết đã lấy đủ chưa
@@ -1350,6 +1415,18 @@ router.post('/release-years', [body('name').trim().notEmpty()], (req, res) => {
   const slug = slugify(name);
   const r = db.prepare('INSERT INTO release_years (name, slug) VALUES (?, ?)').run(name, slug);
   res.status(201).json(db.prepare('SELECT * FROM release_years WHERE id = ?').get(r.lastInsertRowid));
+});
+router.post('/release-years/bulk-delete', (req, res) => {
+  const ids = Array.isArray(req.body?.ids) ? req.body.ids.filter((id) => Number.isInteger(Number(id)) && Number(id) > 0) : [];
+  if (ids.length === 0) return res.status(400).json({ error: 'Thiếu danh sách id năm phát hành cần xóa' });
+  const placeholders = ids.map(() => '?').join(',');
+  const r = db.prepare(`DELETE FROM release_years WHERE id IN (${placeholders})`).run(...ids);
+  res.json({ deleted: r.changes });
+});
+router.post('/release-years/delete-all', (req, res) => {
+  if (req.body?.confirm !== true) return res.status(400).json({ error: 'Cần gửi confirm: true để xóa toàn bộ năm phát hành' });
+  const r = db.prepare('DELETE FROM release_years').run();
+  res.json({ deleted: r.changes });
 });
 
 // ========== Quảng cáo VAST (tải lên file, lưu vào uploads/ads/vast.xml) ==========
