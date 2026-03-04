@@ -317,16 +317,21 @@ const insertMovie = db.prepare(`
 `);
 movies.forEach(m => insertMovie.run(...m));
 
-// Link demo movies to genres (lấy id theo slug vì INSERT OR IGNORE có thể không cho id 1,2,3)
+// Link demo movies to genres (tra cứu genre theo slug để tránh FOREIGN KEY khi id thể loại thay đổi)
 const linkMovieGenre = db.prepare('INSERT OR IGNORE INTO movie_genres (movie_id, genre_id) VALUES (?, ?)');
+const getGenreId = db.prepare('SELECT id FROM genres WHERE slug = ?');
 const demoLinks = [
-  ['inception', 1, 5],      // Inception: Hành động, Khoa học viễn tưởng
-  ['the-dark-knight', 1],   // The Dark Knight: Hành động
-  ['interstellar', 5, 6],   // Interstellar: Khoa học viễn tưởng, Tài liệu
+  ['inception', 'hanh-dong', 'khoa-hoc-vien-tuong'],       // Inception: Hành động, Khoa học viễn tưởng
+  ['the-dark-knight', 'hanh-dong'],                         // The Dark Knight: Hành động
+  ['interstellar', 'khoa-hoc-vien-tuong', 'tai-lieu'],     // Interstellar: Khoa học viễn tưởng, Tài liệu
 ];
-for (const [slug, ...genreIds] of demoLinks) {
-  const row = db.prepare('SELECT id FROM movies WHERE slug = ?').get(slug);
-  if (row) for (const gid of genreIds) linkMovieGenre.run(row.id, gid);
+for (const [movieSlug, ...genreSlugs] of demoLinks) {
+  const movieRow = db.prepare('SELECT id FROM movies WHERE slug = ?').get(movieSlug);
+  if (!movieRow) continue;
+  for (const gSlug of genreSlugs) {
+    const genreRow = getGenreId.get(gSlug);
+    if (genreRow) linkMovieGenre.run(movieRow.id, genreRow.id);
+  }
 }
 
 // Bảng cài đặt hệ thống (key-value)
