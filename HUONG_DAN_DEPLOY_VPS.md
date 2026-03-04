@@ -753,7 +753,58 @@ npm ci
 npm run build
 ```
 
-Nginx đã trỏ root tới `frontend/dist`, không cần restart Nginx. Nếu đổi **CACHE_NAME** trong Service Worker (vd. trong `frontend/public/sw.js` hoặc Vite PWA config), build lại frontend để user nhận bản PWA mới.
+Nginx đã trỏ root tới `frontend/dist`, không cần restart Nginx.
+
+### 12.1. Nếu `git pull` báo conflict vì `.env` hoặc file DB
+
+Git có thể báo: *"Your local changes to the following files would be overwritten by merge: backend/.env, backend/data/phim.db-shm, backend/data/phim.db-wal"*. Trên VPS cần **giữ nguyên** file `.env` và DB của server, chỉ cập nhật code. Làm lần lượt:
+
+```bash
+cd /var/www/cineviet
+
+# 1) Backup .env (phòng khi cần)
+cp backend/.env backend/.env.bak
+
+# 2) Stash các file local để pull được
+git stash push -m "server env and db" backend/.env backend/data/phim.db-shm backend/data/phim.db-wal
+
+# 3) Pull code mới
+git pull origin main
+
+# 4) Lấy lại .env và file DB của server (không ghi đè bằng bản từ repo)
+git stash pop
+```
+
+Nếu `git stash pop` báo conflict ở `backend/.env`: giữ bản trên server (bản bạn vừa pop ra). Chạy:
+
+```bash
+git checkout --theirs backend/.env
+git add backend/.env
+git stash drop
+```
+
+Sau đó kiểm tra `backend/.env` đúng cấu hình VPS rồi mới restart: `pm2 restart cineviet-api`.
+
+### 12.2. Trên máy local (khi `git pull` báo overwrite `phim.db-shm` / `phim.db-wal`)
+
+Trên máy dev, nếu pull báo *"Your local changes would be overwritten by merge: backend/data/phim.db-shm, backend/data/phim.db-wal"*:
+
+- **Cách 1:** Tạm đổi tên hai file (SQLite sẽ tạo lại khi chạy backend), rồi pull (Windows: `ren`, Linux/Mac: `mv`):
+  ```bash
+  cd backend/data
+  ren phim.db-shm phim.db-shm.bak
+  ren phim.db-wal phim.db-wal.bak
+  cd ../..
+  git pull origin main
+  ```
+- **Cách 2:** Bỏ staged thay đổi với các file đó rồi pull (nếu bạn đã `git rm --cached` nhưng chưa commit):
+  ```bash
+  git restore --staged backend/.env backend/data/phim.db-shm backend/data/phim.db-wal
+  git restore backend/data/phim.db-shm backend/data/phim.db-wal
+  git pull origin main
+  ```
+
+Sau khi pull, repo sẽ không còn track `.env` và file `*.db-shm` / `*.db-wal`; file local vẫn nằm trong thư mục và được `.gitignore` bỏ qua.
 
 ---
 
