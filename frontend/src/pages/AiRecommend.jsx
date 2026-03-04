@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { movies as moviesApi, recommendations as recApi } from '../api/client';
 import HomeMovieCard from '../components/HomeMovieCard';
+import { useToast } from '../context/ToastContext';
 
 const MOODS = [
   { id: 'vui-ve', label: 'Vui vẻ', emoji: '😊' },
@@ -36,7 +37,15 @@ const SUGGESTED_PROMPTS = [
   'Series ngắn dưới 10 tập',
 ];
 
+function toList(data) {
+  if (Array.isArray(data)) return data;
+  if (data?.items && Array.isArray(data.items)) return data.items;
+  if (data?.data && Array.isArray(data.data)) return data.data;
+  return [];
+}
+
 export default function AiRecommend() {
+  const { toast } = useToast();
   const [genres, setGenres] = useState([]);
   const [countries, setCountries] = useState([]);
   const [genreId, setGenreId] = useState('');
@@ -51,8 +60,8 @@ export default function AiRecommend() {
   const [askResult, setAskResult] = useState(null);
 
   useEffect(() => {
-    moviesApi.genres().then((r) => setGenres(r.data));
-    moviesApi.countries().then((r) => setCountries(r.data));
+    moviesApi.genres().then((r) => setGenres(toList(r?.data ?? r))).catch(() => setGenres([]));
+    moviesApi.countries().then((r) => setCountries(toList(r?.data ?? r))).catch(() => setCountries([]));
   }, []);
 
   const handleGetSuggestions = () => {
@@ -67,10 +76,12 @@ export default function AiRecommend() {
         type: type || undefined,
         era: era || undefined,
       })
-      .then((r) => setSuggestedMovies(r.data.movies || []))
+      .then((r) => setSuggestedMovies(Array.isArray(r?.data?.movies) ? r.data.movies : []))
       .catch((e) => {
         setSuggestedMovies([]);
-        console.error(e);
+        const msg = e?.response?.data?.error || e?.message || 'Không thể lấy gợi ý. Thử lại sau.';
+        toast.error(msg);
+        console.error('AI suggest:', e);
       })
       .finally(() => setSuggestLoading(false));
   };
@@ -83,8 +94,16 @@ export default function AiRecommend() {
     setAskResult(null);
     recApi
       .aiAsk({ question: text })
-      .then((r) => setAskResult({ answer: r.data.answer, movies: r.data.movies || [] }))
-      .catch((e) => setAskResult({ answer: 'Không thể kết nối AI. Bạn thử lại sau.', movies: [] }))
+      .then((r) => setAskResult({
+        answer: r?.data?.answer ?? 'Đã xử lý câu hỏi của bạn.',
+        movies: Array.isArray(r?.data?.movies) ? r.data.movies : [],
+      }))
+      .catch((e) => {
+        const msg = e?.response?.data?.error || e?.message || 'Không thể kết nối AI. Bạn thử lại sau.';
+        setAskResult({ answer: msg, movies: [] });
+        toast.error(msg);
+        console.error('AI ask:', e);
+      })
       .finally(() => setAskLoading(false));
   };
 
