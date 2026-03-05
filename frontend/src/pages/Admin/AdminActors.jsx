@@ -10,7 +10,7 @@ export default function AdminActors() {
   const [selectedIds, setSelectedIds] = useState(new Set());
 
   const load = () => {
-    admin.actors().then((r) => setActors(Array.isArray(r.data) ? r.data : [])).catch(console.error).finally(() => setLoading(false));
+    admin.actors().then((r) => setActors(Array.isArray(r.data) ? r.data : [])).catch(() => {}).finally(() => setLoading(false));
   };
 
   useEffect(() => {

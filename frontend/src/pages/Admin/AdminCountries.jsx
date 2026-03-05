@@ -10,7 +10,7 @@ export default function AdminCountries() {
   const [selectedIds, setSelectedIds] = useState(new Set());
 
   const load = () => {
-    admin.countries().then((r) => setCountries(Array.isArray(r.data) ? r.data : [])).catch(console.error).finally(() => setLoading(false));
+    admin.countries().then((r) => setCountries(Array.isArray(r.data) ? r.data : [])).catch(() => {}).finally(() => setLoading(false));
   };
 
   useEffect(() => {

@@ -227,7 +227,6 @@ export default function MovieDetail() {
       setComments((prev) => prev.filter((x) => x.id !== commentId));
       toast.success('Đã xóa bình luận.');
     } catch (e) {
-      console.error(e);
       toast.error(e.response?.data?.error || 'Không thể xóa bình luận');
     }
   };

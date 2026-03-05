@@ -34,7 +34,7 @@ export default function Profile() {
         });
         setHistory(deduped);
       })
-      .catch(console.error)
+      .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
 

@@ -132,8 +132,6 @@ export const admin = {
   deleteActorsAll: () => client.post('/admin/actors/delete-all', { confirm: true }),
   syncActorsTmdb: (limit = 500) => client.post('/admin/actors/sync-tmdb', {}, { params: { limit } }),
   actorsTmdbStats: () => client.get('/admin/actors/tmdb-stats'),
-  keywords: () => client.get('/admin/keywords'),
-  createKeyword: (data) => client.post('/admin/keywords', data),
   releaseYears: () => client.get('/admin/release-years'),
   createReleaseYear: (data) => client.post('/admin/release-years', data),
   deleteReleaseYearsBulk: (ids) => client.post('/admin/release-years/bulk-delete', { ids }),

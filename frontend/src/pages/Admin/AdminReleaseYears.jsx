@@ -10,7 +10,7 @@ export default function AdminReleaseYears() {
   const [selectedIds, setSelectedIds] = useState(new Set());
 
   const load = () => {
-    admin.releaseYears().then((r) => setYears(Array.isArray(r.data) ? r.data : [])).catch(console.error).finally(() => setLoading(false));
+    admin.releaseYears().then((r) => setYears(Array.isArray(r.data) ? r.data : [])).catch(() => {}).finally(() => setLoading(false));
   };
 
   useEffect(() => {

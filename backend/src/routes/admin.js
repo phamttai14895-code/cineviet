@@ -1473,18 +1473,6 @@ router.post('/actors/sync-tmdb', async (req, res) => {
   }
 });
 
-// Keywords CRUD (từ khóa)
-router.get('/keywords', (req, res) => {
-  res.json(db.prepare('SELECT id, name, slug FROM keywords ORDER BY name').all());
-});
-router.post('/keywords', [body('name').trim().notEmpty()], (req, res) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
-  const slug = slugify(req.body.name);
-  const r = db.prepare('INSERT INTO keywords (name, slug) VALUES (?, ?)').run(req.body.name, slug);
-  res.status(201).json(db.prepare('SELECT * FROM keywords WHERE id = ?').get(r.lastInsertRowid));
-});
-
 // Release years CRUD (năm phát hành)
 router.get('/release-years', (req, res) => {
   res.json(db.prepare('SELECT id, name, slug FROM release_years ORDER BY name DESC').all());

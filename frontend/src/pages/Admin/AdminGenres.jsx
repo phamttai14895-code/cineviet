@@ -10,7 +10,7 @@ export default function AdminGenres() {
   const [selectedIds, setSelectedIds] = useState(new Set());
 
   const load = () => {
-    admin.genres().then((r) => setGenres(Array.isArray(r.data) ? r.data : [])).catch(console.error).finally(() => setLoading(false));
+    admin.genres().then((r) => setGenres(Array.isArray(r.data) ? r.data : [])).catch(() => {}).finally(() => setLoading(false));
   };
 
   useEffect(() => {

@@ -10,7 +10,7 @@ export default function AdminDirectors() {
   const [selectedIds, setSelectedIds] = useState(new Set());
 
   const load = () => {
-    admin.directors().then((r) => setDirectors(Array.isArray(r.data) ? r.data : [])).catch(console.error).finally(() => setLoading(false));
+    admin.directors().then((r) => setDirectors(Array.isArray(r.data) ? r.data : [])).catch(() => {}).finally(() => setLoading(false));
   };
 
   useEffect(() => {

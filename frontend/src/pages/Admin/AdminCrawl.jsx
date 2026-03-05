@@ -60,7 +60,7 @@ export default function AdminCrawl() {
       .then((r) => {
         if (r?.data && typeof r.data === 'object') setAutoSettings(r.data);
       })
-      .catch(console.error)
+      .catch(() => {})
       .finally(() => setAutoSettingsLoading(false));
   };
 
@@ -70,7 +70,7 @@ export default function AdminCrawl() {
         setGenres(g.data?.items || []);
         setCountries(c.data?.items || []);
       })
-      .catch(console.error)
+      .catch(() => {})
       .finally(() => setLoadingMeta(false));
   }, []);
 

@@ -60,13 +60,6 @@ db.exec(`
     tmdb_id INTEGER
   );
 
-  -- Keywords (từ khóa)
-  CREATE TABLE IF NOT EXISTS keywords (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL UNIQUE,
-    slug TEXT NOT NULL UNIQUE
-  );
-
   -- Release years (năm phát hành)
   CREATE TABLE IF NOT EXISTS release_years (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -236,6 +229,9 @@ if (!commentReportsTable) {
     CREATE INDEX IF NOT EXISTS idx_comment_reports_comment ON comment_reports(comment_id);
   `);
 }
+
+// Migration: xóa bảng keywords (tính năng từ khóa đã gỡ)
+db.exec('DROP TABLE IF EXISTS keywords');
 
 // Migration: bảng watch_reports (báo lỗi khi xem phim)
 const watchReportsTable = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='watch_reports'").get();

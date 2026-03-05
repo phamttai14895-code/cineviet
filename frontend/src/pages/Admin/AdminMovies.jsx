@@ -42,7 +42,7 @@ export default function AdminMovies() {
         setTotal(data.total != null ? data.total : (Array.isArray(data) ? data.length : 0));
         setGenres(g.data);
       })
-      .catch(console.error)
+      .catch(() => {})
       .finally(() => setLoading(false));
   };
 
@@ -68,7 +68,6 @@ export default function AdminMovies() {
       load();
       toast.success('Đã xóa phim.');
     } catch (e) {
-      console.error(e);
       toast.error(e.response?.data?.error || 'Không thể xóa');
     }
   };
@@ -80,7 +79,6 @@ export default function AdminMovies() {
       load();
       toast.success('Đã đổi trạng thái.');
     } catch (e) {
-      console.error(e);
       toast.error('Không thể đổi trạng thái');
     }
   };
@@ -114,7 +112,6 @@ export default function AdminMovies() {
       load();
       toast.success(`Đã xóa ${selectedIds.size} phim.`);
     } catch (e) {
-      console.error(e);
       toast.error(e.response?.data?.error || 'Không thể xóa');
     }
   };
@@ -132,7 +129,6 @@ export default function AdminMovies() {
       load();
       toast.success(res?.data?.message || `Đã xóa ${res?.data?.deleted ?? 0} phim.`);
     } catch (e) {
-      console.error(e);
       toast.error(e.response?.data?.error || 'Không thể xóa toàn bộ phim');
     }
   };

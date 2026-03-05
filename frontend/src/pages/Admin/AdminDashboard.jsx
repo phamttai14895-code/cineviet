@@ -114,13 +114,13 @@ export default function AdminDashboard() {
         setRecentUsers(u);
         setActivity(a);
       })
-      .catch(console.error)
+      .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
 
   useEffect(() => {
     if (!loading) {
-      admin.viewsByDay(chartPeriod).then((r) => setViewsByDay(r.data)).catch(console.error);
+      admin.viewsByDay(chartPeriod).then((r) => setViewsByDay(r.data)).catch(() => {});
     }
   }, [chartPeriod, loading]);
 

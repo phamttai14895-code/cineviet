@@ -16,7 +16,6 @@ export const ophim = {
   phim: (slug) => `${OPROM_BASE}/phim/${encodeURIComponent(slug)}`,
   phimImages: (slug) => `${OPROM_BASE}/phim/${encodeURIComponent(slug)}/images`,
   phimPeoples: (slug) => `${OPROM_BASE}/phim/${encodeURIComponent(slug)}/peoples`,
-  phimKeywords: (slug) => `${OPROM_BASE}/phim/${encodeURIComponent(slug)}/keywords`,
   cdnImage: 'https://img.ophim.live',
 };
 

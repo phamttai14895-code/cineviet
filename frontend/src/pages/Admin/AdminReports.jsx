@@ -34,7 +34,7 @@ export default function AdminReports() {
         setTotal(reportsRes.data?.total ?? 0);
         setPendingCount(countRes.data?.pending ?? 0);
       })
-      .catch(console.error)
+      .catch(() => {})
       .finally(() => setLoading(false));
   };
 
@@ -49,7 +49,6 @@ export default function AdminReports() {
       window.dispatchEvent(new Event('admin-reports-updated'));
       toast.success('Đã cập nhật trạng thái.');
     } catch (e) {
-      console.error(e);
       toast.error(e.response?.data?.error || 'Không thể cập nhật trạng thái');
     }
   };
@@ -62,7 +61,6 @@ export default function AdminReports() {
       window.dispatchEvent(new Event('admin-reports-updated'));
       toast.success('Đã xóa báo cáo.');
     } catch (e) {
-      console.error(e);
       toast.error(e.response?.data?.error || 'Không thể xóa báo cáo');
     }
   };

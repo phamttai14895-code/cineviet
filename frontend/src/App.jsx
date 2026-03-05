@@ -1,4 +1,4 @@
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './components/Layout';
 import ScrollToTop from './components/ScrollToTop';
@@ -7,7 +7,6 @@ import MaintenanceGate from './components/MaintenanceGate';
 import AppLoadingScreen from './components/AppLoadingScreen';
 import PwaUpdateNotice from './components/PwaUpdateNotice';
 import { useAuth } from './context/AuthContext';
-import { useEffect } from 'react';
 
 /* Lazy load trang để giảm bundle ban đầu, tải theo route */
 const Home = lazy(() => import('./pages/Home'));

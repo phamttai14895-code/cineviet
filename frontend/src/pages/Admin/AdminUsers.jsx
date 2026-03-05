@@ -14,7 +14,7 @@ export default function AdminUsers() {
   const load = () => {
     setLoading(true);
     const params = search.trim() ? { search: search.trim() } : {};
-    admin.users(params).then((r) => setUsers(r.data)).catch(console.error).finally(() => setLoading(false));
+    admin.users(params).then((r) => setUsers(r.data)).catch(() => {}).finally(() => setLoading(false));
   };
 
   useEffect(() => {
@@ -41,7 +41,6 @@ export default function AdminUsers() {
       load();
       toast.success(nextStatus === 'locked' ? 'Đã khóa tài khoản.' : 'Đã mở khóa tài khoản.');
     } catch (e) {
-      console.error(e);
       toast.error(e.response?.data?.error || 'Không thể đổi trạng thái');
     }
   };

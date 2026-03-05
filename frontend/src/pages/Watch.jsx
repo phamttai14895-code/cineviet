@@ -494,7 +494,6 @@ export default function Watch() {
       setComments((prev) => prev.filter((x) => x.id !== commentId));
       toast.success('Đã xóa bình luận.');
     } catch (err) {
-      console.error(err);
       toast.error(err.response?.data?.error || 'Không thể xóa bình luận');
     }
   }, [movie, toast]);

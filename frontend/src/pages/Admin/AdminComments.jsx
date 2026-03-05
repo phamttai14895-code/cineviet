@@ -25,7 +25,7 @@ export default function AdminComments() {
         setComments(commentsRes.data);
         setReportedCount(countRes.data?.count ?? 0);
       })
-      .catch(console.error)
+      .catch(() => {})
       .finally(() => setLoading(false));
   };
 
@@ -44,7 +44,6 @@ export default function AdminComments() {
       window.dispatchEvent(new Event('admin-comments-updated'));
       toast.success(nextStatus === 'hidden' ? 'Đã ẩn bình luận.' : 'Đã hiện bình luận.');
     } catch (e) {
-      console.error(e);
       toast.error(e.response?.data?.error || 'Không thể đổi trạng thái');
     }
   };
@@ -57,7 +56,6 @@ export default function AdminComments() {
       window.dispatchEvent(new Event('admin-comments-updated'));
       toast.success('Đã xóa bình luận.');
     } catch (e) {
-      console.error(e);
       toast.error(e.response?.data?.error || 'Không thể xóa');
     }
   };

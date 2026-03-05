@@ -42,7 +42,7 @@ export default function AdminAddMovie() {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    admin.genres().then((r) => setGenres(r.data)).catch(console.error);
+    admin.genres().then((r) => setGenres(r.data)).catch(() => {});
   }, []);
 
   const update = (key, value) => setForm((f) => ({ ...f, [key]: value }));
@@ -80,7 +80,6 @@ export default function AdminAddMovie() {
       toast.success('Đã thêm phim.');
       navigate('/admin/movies');
     } catch (err) {
-      console.error(err);
       toast.error(err.response?.data?.error || 'Có lỗi khi lưu phim');
     } finally {
       setSubmitting(false);

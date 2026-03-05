@@ -90,7 +90,6 @@ export default function AdminEditMovie() {
       toast.success('Đã lưu phim.');
       navigate('/admin/movies');
     } catch (err) {
-      console.error(err);
       toast.error(err.response?.data?.error || 'Có lỗi khi lưu phim');
     } finally {
       setSubmitting(false);
