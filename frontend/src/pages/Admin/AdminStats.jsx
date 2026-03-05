@@ -56,6 +56,16 @@ export default function AdminStats() {
         </div>
 
         <div className="admin-stats-card admin-stats-card-cyan">
+          <span className="admin-stats-card-label">TỔNG SỐ PHIM</span>
+          <span className="admin-stats-card-value">{d.totalMovies ?? 0}</span>
+        </div>
+
+        <div className="admin-stats-card admin-stats-card-cyan">
+          <span className="admin-stats-card-label">CẬP NHẬT HÔM NAY</span>
+          <span className="admin-stats-card-value">{d.updatedToday ?? 0}</span>
+        </div>
+
+        <div className="admin-stats-card admin-stats-card-cyan">
           <span className="admin-stats-card-label">BĂNG THÔNG</span>
           <span className="admin-stats-card-value">{(d.bandwidthMbps ?? 0).toFixed(1)} Mbps</span>
         </div>

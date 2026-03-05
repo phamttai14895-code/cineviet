@@ -5,7 +5,8 @@ import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 
 const PIN_LENGTH = 6;
-const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY?.trim() || '';
+const _rawTurnstile = (import.meta.env.VITE_TURNSTILE_SITE_KEY ?? '').toString().trim();
+const TURNSTILE_SITE_KEY = (_rawTurnstile === '' || _rawTurnstile === 'undefined' || _rawTurnstile === 'false') ? '' : _rawTurnstile;
 
 export default function RegisterModal({ open, onClose, onSuccess }) {
   const { login, openLoginModal, setRegisterModalOpen, setLoginModalOpen } = useAuth();

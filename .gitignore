@@ -1,17 +1,20 @@
 # ========== File nhạy cảm — KHÔNG commit lên GitHub ==========
-# Copy .env.example thành .env và điền giá trị thật; chỉ commit .env.example (placeholder).
+# Copy .env.example thành .env và điền giá trị thật; CHỈ commit .env.example (placeholder).
+# Pre-commit hook chặn commit các file dưới đây. Cài: Windows: scripts\setup-hooks.bat | Linux/macOS: sh scripts/setup-hooks.sh
 .env
 .env.local
 .env.*.local
 .env.development
 .env.production
 .env.test
+**/.env
 backend/.env
 frontend/.env
 *.pem
 *.key
 secrets/
 *.secret
+**/secrets/
 
 # ========== Dependencies & build ==========
 node_modules/

@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { Link } from 'react-router-dom';
 import { movies as moviesApi } from '../api/client';
 import MovieCard from '../components/MovieCard';
 import { imageDisplayUrl } from '../utils/imageUrl';
@@ -139,9 +138,6 @@ export default function XemGiHomNay() {
               <div className="xem-gi-result-card-wrap">
                 <MovieCard movie={movie} showBadges />
               </div>
-              <Link to={`/movie/${movie.slug || movie.id}`} className="xem-gi-result-link">
-                Xem chi tiết &rarr;
-              </Link>
             </div>
           </section>
         )}

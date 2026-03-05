@@ -150,6 +150,11 @@ router.get('/stats/vps', (req, res) => {
     const load1 = (loadAvg[0] ?? 0);
     const cpuPercent = Math.min(100, Math.round((load1 / cpus) * 1000) / 10);
 
+    const totalMovies = db.prepare('SELECT COUNT(*) as c FROM movies').get()?.c ?? 0;
+    const updatedToday = db.prepare(
+      "SELECT COUNT(*) as c FROM movies WHERE date(updated_at) = date('now', 'localtime')"
+    ).get()?.c ?? 0;
+
     res.json({
       liveWatching: liveStats.totalViewers ?? 0,
       bandwidthMbps: 0,
@@ -160,6 +165,8 @@ router.get('/stats/vps', (req, res) => {
       diskUsedGb,
       diskTotalGb,
       cpuPercent,
+      totalMovies,
+      updatedToday,
     });
   } catch (err) {
     console.error('VPS stats error:', err);
@@ -173,6 +180,8 @@ router.get('/stats/vps', (req, res) => {
       diskUsedGb: 0,
       diskTotalGb: 0,
       cpuPercent: 0,
+      totalMovies: 0,
+      updatedToday: 0,
     });
   }
 });

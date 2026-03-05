@@ -843,12 +843,22 @@ Sau khi pull, repo sẽ không còn track `.env` và file `*.db-shm` / `*.db-wal
   - Thư mục **`node_modules/`**, **`dist/`**, **`uploads/`**, v.v.
 - Chỉ **`.env.example`** (placeholder, không có giá trị thật) nên được commit. Khi clone repo, copy thành `.env` rồi điền secret thật trên máy/VPS.
 
-### 14.2 Trước khi commit/push
+### 14.2 Pre-commit hook (chặn commit file nhạy cảm)
+
+Repo có sẵn hook **pre-commit** để **tự động chặn** commit nếu có file nhạy cảm (`.env`, `*.pem`, `*.key`, `secrets/`, …):
+
+- **Cài hook** (chạy một lần sau khi clone hoặc trên máy mới):
+  - **Windows (cmd):** `scripts\setup-hooks.bat`
+  - **Windows (PowerShell):** `.\scripts\setup-hooks.ps1`
+  - **Linux/macOS hoặc Git Bash:** `sh scripts/setup-hooks.sh`
+- Hook nằm ở `scripts/git-hooks/pre-commit`. Khi bạn `git add` rồi `git commit`, nếu có file bị cấm thì commit sẽ **bị từ chối** và hiện thông báo. Chỉ commit **`.env.example`** (placeholder), không commit `.env` hoặc key/secret.
+
+### 14.3 Trước khi commit/push
 
 - **Không** copy nội dung từ `.env` vào `.env.example`.
 - Chạy `git status` và kiểm tra không có file `.env`, `*.key`, `*.pem` trong danh sách staged.
 - Nếu đã lỡ commit file nhạy cảm: xóa file khỏi Git (và sửa lịch sử nếu cần), thêm vào `.gitignore`, rồi **đổi ngay** các secret đã lộ (tạo API key mới, đổi mật khẩu, JWT secret mới).
 
-### 14.3 GitHub Push Protection
+### 14.4 GitHub Push Protection
 
 - GitHub có thể **từ chối push** nếu phát hiện secret (API key, OAuth client secret, …) trong commit. Khi đó cần sửa commit (xóa secret, dùng placeholder trong `.env.example`) rồi push lại.

@@ -29,5 +29,6 @@ export async function verifyTurnstile(token, remoteip = null) {
 }
 
 export function isTurnstileEnabled() {
-  return !!(process.env.TURNSTILE_SECRET && process.env.TURNSTILE_SECRET.trim());
+  const s = (process.env.TURNSTILE_SECRET ?? '').toString().trim();
+  return s.length > 0 && s !== 'undefined' && s !== 'false';
 }

@@ -5,7 +5,8 @@ import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 
 const API_URL = import.meta.env.VITE_API_URL || '';
-const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY?.trim() || '';
+const _raw = (import.meta.env.VITE_TURNSTILE_SITE_KEY ?? '').toString().trim();
+const TURNSTILE_SITE_KEY = (_raw === '' || _raw === 'undefined' || _raw === 'false') ? '' : _raw;
 
 export default function LoginModal({ open, onClose, onSuccess }) {
   const { login, openRegisterModal } = useAuth();

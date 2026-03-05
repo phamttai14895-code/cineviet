@@ -1,0 +1,26 @@
+#!/bin/sh
+# Chặn commit các file nhạy cảm (.env, key, secret...). Chỉ commit .env.example.
+# Cài: copy vào .git/hooks/pre-commit và chmod +x (hoặc chạy scripts/setup-hooks.sh)
+
+exec 1>&2
+
+is_sensitive() {
+  case "$1" in
+    *.env.example) return 1 ;;   # allow placeholder files
+    .env|.env.*) return 0 ;;
+    backend/.env|frontend/.env) return 0 ;;
+    */.env|*/.env.*) return 0 ;;
+    *.pem|*.key) return 0 ;;
+    secrets/*|*.secret) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
+for f in $(git diff --cached --name-only); do
+  if is_sensitive "$f"; then
+    echo "BLOCKED: Sensitive file must not be pushed to GitHub: $f"
+    echo "  Only commit .env.example (placeholder). Do not commit .env, *.pem, *.key, or secrets."
+    exit 1
+  fi
+done
+exit 0
