@@ -10374,6 +10374,12 @@
 }
 .watch-player-wrap.hide-cursor { cursor: none; }
 .watch-player-wrap.hide-cursor .watch-controls-overlay { opacity: 0; }
+/* Ẩn nút play/pause giữa màn khi thanh control đã ẩn (fullscreen hoặc không) */
+.watch-player-wrap.hide-cursor .watch-center-play {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  visibility: hidden;
+}
 
 .watch-progress-wrap {
   position: relative;
