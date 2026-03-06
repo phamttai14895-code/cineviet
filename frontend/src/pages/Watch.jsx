@@ -68,6 +68,7 @@ export default function Watch() {
   const [episodeSearchQuery, setEpisodeSearchQuery] = useState('');
   const [episodesListOpen, setEpisodesListOpen] = useState(true);
   const [progressLoaded, setProgressLoaded] = useState(false);
+  const [repliesExpanded, setRepliesExpanded] = useState(new Set());
   const seoImage = !movie ? undefined : (() => {
     const raw = movie.backdrop || movie.poster;
     if (!raw) return undefined;
@@ -1086,11 +1087,19 @@ export default function Watch() {
                     <p className="watch-comments-empty-text">Chưa có bình luận nào. Hãy là người đầu tiên!</p>
                   </div>
                 </li>
-              ) : (
-                comments.map((c) => (
-                  <li key={c.id} className={`movie-detail-comment-item ${c.parent_id ? 'is-reply' : ''}`}>
+              ) : (() => {
+                const roots = comments.filter((c) => !c.parent_id);
+                const repliesByParent = {};
+                comments.forEach((c) => {
+                  if (c.parent_id) {
+                    if (!repliesByParent[c.parent_id]) repliesByParent[c.parent_id] = [];
+                    repliesByParent[c.parent_id].push(c);
+                  }
+                });
+                const renderCommentItem = (c) => (
+                  <>
                     <div className="movie-detail-comment-avatar">
-                      {(c.user_avatar && <img src={c.user_avatar} alt="" />) || (
+                      {(c.user_avatar && <img src={imageDisplayUrl(c.user_avatar)} alt="" />) || (
                         <span>{c.user_name?.charAt(0)?.toUpperCase() || '?'}</span>
                       )}
                     </div>
@@ -1171,9 +1180,49 @@ export default function Watch() {
                         )}
                       </div>
                     </div>
-                  </li>
-                ))
-              )}
+                  </>
+                );
+                return roots.map((root) => {
+                  const replies = repliesByParent[root.id] || [];
+                  return (
+                    <li key={root.id} className="movie-detail-comment-item">
+                      <div className="movie-detail-comment-root-inner">
+                        {renderCommentItem(root)}
+                      </div>
+                      {replies.length > 0 && (
+                        <div className="movie-detail-comment-replies-wrap">
+                          {repliesExpanded.has(root.id) ? (
+                            <>
+                              <button
+                                type="button"
+                                className="movie-detail-comment-replies-toggle"
+                                onClick={() => setRepliesExpanded((prev) => { const n = new Set(prev); n.delete(root.id); return n; })}
+                              >
+                                <i className="fas fa-chevron-up" aria-hidden /> Ấn phản hồi
+                              </button>
+                              <ul className="movie-detail-comment-replies">
+                                {replies.map((reply) => (
+                                  <li key={reply.id} className="movie-detail-comment-item is-reply">
+                                    {renderCommentItem(reply)}
+                                  </li>
+                                ))}
+                              </ul>
+                            </>
+                          ) : (
+                            <button
+                              type="button"
+                              className="movie-detail-comment-replies-toggle"
+                              onClick={() => setRepliesExpanded((prev) => new Set(prev).add(root.id))}
+                            >
+                              <i className="fas fa-chevron-down" aria-hidden /> Xem {replies.length} phản hồi
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </li>
+                  );
+                });
+              })()}
             </ul>
             </section>
           </div>

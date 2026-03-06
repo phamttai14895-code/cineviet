@@ -564,25 +564,30 @@ export default function VideoPlayer({
         </div>
 
         <div className="watch-controls-overlay">
-          <div
-            className="watch-progress-wrap"
-            onClick={setSeek}
-            onMouseMove={(e) => {
-              const bar = e.currentTarget;
-              const rect = bar.getBoundingClientRect();
-              const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-              const t = pct * (duration || 0);
-              setProgressTooltip({ time: t, left: e.clientX - rect.left });
-            }}
-          >
-            <div className="watch-progress-bg">
-              <div className="watch-progress-buffered" style={{ width: `${bufferedPct}%` }} />
-              <div className="watch-progress-fill" style={{ width: `${progressPct}%` }} />
-              <div className="watch-progress-thumb" style={{ left: `${progressPct}%` }} />
+          <div className="watch-progress-row">
+            <div
+              className="watch-progress-wrap"
+              onClick={setSeek}
+              onMouseMove={(e) => {
+                const bar = e.currentTarget;
+                const rect = bar.getBoundingClientRect();
+                const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+                const t = pct * (duration || 0);
+                setProgressTooltip({ time: t, left: e.clientX - rect.left });
+              }}
+            >
+              <div className="watch-progress-bg">
+                <div className="watch-progress-buffered" style={{ width: `${bufferedPct}%` }} />
+                <div className="watch-progress-fill" style={{ width: `${progressPct}%` }} />
+                <div className="watch-progress-thumb" style={{ left: `${progressPct}%` }} />
+              </div>
+              <div className="watch-progress-tooltip" style={{ left: progressTooltip.left }}>
+                {formatTime(progressTooltip.time)}
+              </div>
             </div>
-            <div className="watch-progress-tooltip" style={{ left: progressTooltip.left }}>
-              {formatTime(progressTooltip.time)}
-            </div>
+            <span className="watch-time">
+              {formatTime(currentTime)} / {formatTime(duration)}
+            </span>
           </div>
           <div className="watch-controls-bottom">
             <div className="watch-controls-row watch-controls-left">
@@ -614,9 +619,6 @@ export default function VideoPlayer({
                   />
                 </div>
               </div>
-              <span className="watch-time">
-                {formatTime(currentTime)} / {formatTime(duration)}
-              </span>
             </div>
             <div className="watch-controls-right">
               {sources.length > 1 && (

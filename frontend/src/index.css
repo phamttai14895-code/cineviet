@@ -767,7 +767,7 @@
   display: none;
 }
 
-/* ========== Header mobile + tablet (hamburger + logo + search icon, drawer) ========== */
+/* ========== Header mobile + tablet (hamburger + logo giữa + search icon, drawer) ========== */
 @media (max-width: 1024px) {
   .header-inner {
     display: grid;
@@ -777,11 +777,35 @@
     justify-items: center;
     padding: 0 var(--space-md);
     height: 56px;
+    position: relative;
   }
 
   .header-mobile-menu-btn {
     display: flex;
     justify-self: start;
+    z-index: 2;
+    position: relative;
+  }
+
+  /* Logo căn giữa header (trên mobile): phủ full width, flex center */
+  .header-mobile-center {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    min-width: 0;
+    width: 100%;
+    padding: 0;
+  }
+  .header-mobile-center .logo {
+    pointer-events: auto;
+    letter-spacing: 0.12em;
+    font-size: 1.2rem;
   }
 
   .logo {
@@ -807,27 +831,22 @@
     display: none !important;
   }
 
-  /* Icon tìm kiếm luôn cùng hàng với logo (cột 3), không rơi xuống dòng */
+  /* Icon tìm kiếm cùng hàng (cột 3), z-index để click được khi logo phủ giữa */
   .header-right {
     grid-column: 3;
     grid-row: 1;
     justify-self: end;
+    z-index: 2;
+    position: relative;
   }
 
-  .header-mobile-center {
-    min-width: 0;
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0 var(--space-xs);
-  }
-
-  /* Khi mở tìm kiếm: ô giữa span 2 cột (chiếm luôn ô nút đóng), ẩn header-right, thanh search + nút đóng nằm chung một hàng sát nhau */
+  /* Khi mở tìm kiếm: ô giữa span 2 cột, bỏ absolute để search bar chiếm chỗ */
   .header-inner.header-search-expanded .header-mobile-center {
+    position: relative;
     grid-column: 2 / -1;
     padding-right: 0;
     padding-left: 0;
+    pointer-events: auto;
   }
   .header-inner.header-search-expanded .header-right {
     display: none !important;
@@ -8604,6 +8623,7 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
+  justify-content: flex-start;
   gap: var(--space-sm);
   margin: 0 0 var(--space-md);
 }
@@ -9070,11 +9090,12 @@
   color: var(--text-on-accent);
 }
 
+/* Desktop & tablet: danh sách tập 10 cột, scroll như cũ */
 .movie-detail-episodes-list {
   display: grid;
   grid-template-columns: repeat(10, minmax(4rem, 1fr));
   gap: var(--space-sm);
-  max-height: 12rem; /* 4 hàng × 10 tập = 40 tập hiện, quá 40 kéo scroll */
+  max-height: 12rem;
   overflow-y: auto;
   overflow-x: auto;
 }
@@ -9139,32 +9160,13 @@
   color: var(--muted);
 }
 
-@media (max-width: 1024px) {
-  .movie-detail-hero-content {
-    grid-template-columns: 180px 1fr;
-  }
-  .movie-detail-hero-rate-block {
-    max-width: none;
-    left: 0;
-    right: 0;
-    padding-left: var(--space-md);
-    padding-right: var(--space-md);
-    text-align: center;
-  }
-  .movie-detail-body-grid {
-    grid-template-columns: 1fr;
-  }
-}
+/* Desktop & tablet: giữ layout trang chi tiết phim như cũ (2 cột, rate block góc phải, danh sách tập 10 cột). Chỉ mobile (768px) áp dụng 1 cột + reorder. */
 
 /* Tablet (768px–1024px): poster rộng hơn, khoảng cách thoải mái */
 @media (max-width: 1024px) and (min-width: 768px) {
   .movie-detail-hero-content {
     grid-template-columns: 200px 1fr;
     gap: var(--space-xl);
-  }
-  .movie-detail-hero-rate-block {
-    padding-left: var(--space-lg);
-    padding-right: var(--space-lg);
   }
   .watch-page {
     padding-left: var(--space-xl);
@@ -9179,6 +9181,17 @@
 }
 
 @media (max-width: 640px) {
+  .movie-detail-hero {
+    padding: var(--space-xl) 0;
+    min-height: 0;
+  }
+  .movie-detail-hero-inner {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xl);
+    padding-bottom: var(--space-lg);
+    margin-top: 0;
+  }
   .movie-detail-hero-content {
     grid-template-columns: 1fr;
     gap: var(--space-lg);
@@ -9196,6 +9209,7 @@
   .movie-detail-genres {
     justify-content: center;
   }
+  /* 640px: cùng thứ tự (tập → bình luận → nội dung → thông tin → diễn viên), đánh giá đã ẩn ở 768px */
 }
 
 .movie-detail-section {
@@ -9609,6 +9623,55 @@
   padding-left: calc(40px + var(--space-md));
 }
 
+/* Root comment có wrapper để đặt nút ẩn/hiện phản hồi bên dưới */
+.movie-detail-comment-item:has(.movie-detail-comment-root-inner) {
+  flex-direction: column;
+  align-items: stretch;
+}
+.movie-detail-comment-root-inner {
+  display: flex;
+  gap: var(--space-md);
+  width: 100%;
+}
+.movie-detail-comment-replies-wrap {
+  margin-top: var(--space-xs);
+  padding-left: calc(40px + var(--space-md));
+}
+.movie-detail-comment-replies-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0;
+  margin: 0 0 var(--space-sm);
+  border: none;
+  background: none;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--accent);
+  cursor: pointer;
+  font-family: inherit;
+  transition: color var(--transition-fast);
+}
+.movie-detail-comment-replies-toggle:hover {
+  color: var(--accent-hover);
+}
+.movie-detail-comment-replies-toggle i {
+  font-size: 0.7rem;
+}
+.movie-detail-comment-replies {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  border-left: 2px solid var(--border);
+  padding-left: var(--space-md);
+}
+.movie-detail-comment-replies .movie-detail-comment-item {
+  border-bottom: 1px solid var(--border);
+}
+.movie-detail-comment-replies .movie-detail-comment-item:last-child {
+  border-bottom: none;
+}
+
 .movie-detail-comment-avatar {
   width: 40px;
   height: 40px;
@@ -9955,6 +10018,13 @@
 
 /* Responsive */
 @media (max-width: 768px) {
+  .movie-detail-hero {
+    min-height: 0;
+    padding: var(--space-xl) 0;
+  }
+  .movie-detail-hero-inner {
+    margin-top: 0;
+  }
   .movie-detail-hero-content {
     grid-template-columns: 1fr;
     gap: var(--space-lg);
@@ -9986,10 +10056,39 @@
     justify-content: center;
   }
 
+  .movie-detail-hero-tags {
+    justify-content: center;
+  }
+
   .movie-detail-rate {
     margin-left: 0;
     padding-left: 0;
     border-left: none;
+  }
+
+  /* Mobile: bỏ đánh giá phim */
+  .movie-detail-hero-rate-block {
+    display: none !important;
+  }
+  /* Mobile: 1 cột, thứ tự — Danh sách tập → Bình luận → Nội dung phim → Thông tin chi tiết → Diễn viên */
+  .movie-detail-body-grid {
+    grid-template-columns: 1fr;
+    display: flex;
+    flex-direction: column;
+  }
+  .movie-detail-body-right {
+    order: 1;
+    max-width: 100%;
+  }
+  .movie-detail-body-left {
+    order: 2;
+  }
+
+  /* Mobile: danh sách tập 3 cột, scroll dọc */
+  .movie-detail-episodes-list {
+    grid-template-columns: repeat(3, 1fr);
+    max-height: 18rem;
+    overflow-x: hidden;
   }
 
   .movie-detail-related-grid {
@@ -10387,13 +10486,29 @@
 .watch-player-wrap.hide-cursor { cursor: none; }
 .watch-player-wrap.hide-cursor .watch-controls-overlay { opacity: 0; }
 
+/* Hàng thanh progress + thời gian nằm cạnh nhau */
+.watch-progress-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  min-width: 0;
+}
+.watch-progress-row .watch-progress-wrap {
+  flex: 1;
+  min-width: 0;
+}
+.watch-progress-row .watch-time {
+  flex-shrink: 0;
+  margin: 0;
+}
+
 .watch-progress-wrap {
   position: relative;
   height: 20px;
   cursor: pointer;
   display: flex;
   align-items: center;
-  margin-bottom: 0.5rem;
   padding: 0;
 }
 .watch-progress-bg {
@@ -10604,6 +10719,28 @@
 }
 .watch-ctrl-menu-item.active { color: var(--accent); }
 .watch-ctrl-menu-item.active::after { content: '✓'; font-size: 0.8rem; }
+
+/* Mobile: đảm bảo hàng nút không cắt nút fullscreen — cuộn ngang hàng điều khiển */
+@media (max-width: 768px) {
+  .watch-controls-overlay {
+    padding-left: var(--space-sm);
+    padding-right: var(--space-sm);
+  }
+  .watch-controls-bottom {
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    min-width: min-content;
+    flex-wrap: nowrap;
+  }
+  .watch-controls-row,
+  .watch-controls-right {
+    flex-shrink: 0;
+  }
+  .watch-ctrl-btn {
+    flex-shrink: 0;
+  }
+}
 
 /* Shortcuts hint & Toast */
 .watch-shortcuts-hint {
@@ -12049,20 +12186,21 @@
   line-height: 1.35;
 }
 
-@media (max-width: 1024px) {
+/* Tablet (769px–1024px) giữ layout desktop. Chỉ mobile (≤768px) chuyển 1 cột. */
+@media (max-width: 768px) {
   .watch-below-layout {
     grid-template-columns: 1fr;
   }
   .watch-below-right {
     position: static;
     display: grid;
-    grid-template-columns: auto 1fr;
+    grid-template-columns: 1fr;
     gap: var(--space-lg);
     align-items: start;
     padding: var(--space-md);
   }
   .watch-below-poster-wrap {
-    max-width: 160px;
+    max-width: none;
     border-radius: var(--radius);
   }
   .watch-below-now-watching {
@@ -12076,15 +12214,6 @@
   }
   .watch-below-details {
     padding: 0;
-  }
-}
-
-@media (max-width: 768px) {
-  .watch-below-right {
-    grid-template-columns: 1fr;
-  }
-  .watch-below-poster-wrap {
-    max-width: none;
   }
 }
 
@@ -12256,11 +12385,12 @@
   color: var(--accent);
 }
 
-/* Watch — Responsive: tablet & mobile */
-@media (max-width: 1024px) {
+/* Watch — Tablet (769px–1024px) giữ CSS desktop. Chỉ mobile (≤768px) áp dụng layout 1 cột. */
+@media (max-width: 768px) {
   .watch-info-row {
-    grid-template-columns: auto 1fr;
-    gap: var(--space-lg);
+    grid-template-columns: 1fr;
+    gap: var(--space-md);
+    margin-bottom: var(--space-lg);
   }
   .watch-rate-block {
     grid-column: 1 / -1;
@@ -12276,20 +12406,12 @@
   .watch-below-grid {
     grid-template-columns: 1fr;
   }
-}
-
-@media (max-width: 768px) {
   .watch-page {
     padding-left: var(--space-md);
     padding-right: var(--space-md);
   }
   .watch-below {
     padding: var(--space-lg) var(--space-md);
-  }
-  .watch-info-row {
-    grid-template-columns: 1fr;
-    gap: var(--space-md);
-    margin-bottom: var(--space-lg);
   }
   .watch-info-left {
     flex-direction: column;
@@ -12311,6 +12433,9 @@
     font-size: 0.8125rem;
   }
   .watch-episodes-grid {
+    grid-template-columns: repeat(3, 1fr);
+    max-height: 18rem;
+    overflow-x: hidden;
     gap: var(--space-xs);
   }
   .watch-episode-btn {
@@ -12482,14 +12607,21 @@
   margin: var(--space-xs) 0 0;
 }
 
+/* Desktop: 10 tập 1 hàng. Tablet: 7 tập 1 hàng (override ở dưới). Mobile: 3 tập (768px). */
 .watch-episodes-grid {
   display: grid;
   grid-template-columns: repeat(10, minmax(4rem, 1fr));
   gap: var(--space-sm);
-  max-height: 12rem; /* 4 hàng × 10 tập = 40 tập hiện, quá 40 kéo scroll */
+  max-height: 12rem;
   overflow-y: auto;
   overflow-x: auto;
   min-width: 0;
+}
+
+@media (max-width: 1024px) and (min-width: 769px) {
+  .watch-episodes-grid {
+    grid-template-columns: repeat(7, minmax(4rem, 1fr));
+  }
 }
 
 .watch-episode-btn {
@@ -12639,8 +12771,8 @@
   }
 
   .watch-episodes-grid {
-    grid-template-columns: repeat(10, 1fr);
-    max-height: 12rem; /* 4 hàng × 10 tập = 40 tập, quá 40 kéo scroll */
+    grid-template-columns: repeat(10, minmax(4rem, 1fr));
+    max-height: 12rem;
   }
 }
 
