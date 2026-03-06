@@ -10341,6 +10341,12 @@
   opacity: 1 !important;
   visibility: visible;
 }
+/* Luôn ẩn nút giữa màn khi thanh control đã ẩn (fullscreen hay không, kể cả khi hover) — đặt sau để override mọi rule fullscreen/hover */
+.watch-player-wrap .watch-player.controls-hidden .watch-center-play {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  visibility: hidden !important;
+}
 .watch-skip-ripple {
   position: absolute; top: 50%; transform: translateY(-50%);
   width: 80px; height: 80px; border-radius: 50%;
