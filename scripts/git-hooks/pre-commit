@@ -16,8 +16,11 @@ is_sensitive() {
   esac
 }
 
+# Cho phép xóa (D) file nhạy cảm khỏi repo; chỉ chặn khi thêm hoặc sửa
+deleted=$(git diff --cached --diff-filter=D --name-only)
 for f in $(git diff --cached --name-only); do
   if is_sensitive "$f"; then
+    case "$deleted" in *"$f"*) continue ;; esac
     echo "BLOCKED: Sensitive file must not be pushed to GitHub: $f"
     echo "  Only commit .env.example (placeholder). Do not commit .env, *.pem, *.key, or secrets."
     exit 1
