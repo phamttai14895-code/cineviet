@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { imageDisplayUrl, NO_POSTER_DATA_URL } from '../utils/imageUrl.js';
 import { toTitleCase } from '../utils/titleCase.js';
 import { useAuth } from '../context/AuthContext';
-import { user as userApi } from '../api/client';
+import { user as userApi, movies as moviesApi } from '../api/client';
 
 const POSTER_PLACEHOLDER = NO_POSTER_DATA_URL;
 
@@ -242,7 +242,7 @@ export default function HoverPopupCard({ movie, children, className = '' }) {
       openLoginModal();
       return;
     }
-    userApi.favorite(movie.id).then(() => setFavorited((v) => !v)).catch(() => {});
+    moviesApi.favorite(movie.id).then((r) => setFavorited(r.data?.favorited ?? !favorited)).catch(() => {});
   };
 
   const popupContent = visible && movie && (

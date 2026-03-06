@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { user as userApi } from '../api/client';
+import { user as userApi, movies as moviesApi } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import MovieCard from '../components/MovieCard';
 import AvatarPickerModal from '../components/AvatarPickerModal';
@@ -134,9 +134,26 @@ export default function Profile() {
         favorites.length === 0 ? (
           <p className="profile-empty">Chưa có phim yêu thích. <Link to="/">Xem phim</Link> và nhấn Thích trên trang phim.</p>
         ) : (
-          <div className="movie-grid" style={{ marginTop: '24px' }}>
+          <div className="movie-grid profile-card-grid" style={{ marginTop: '24px' }}>
             {favorites.map((m) => (
-              <MovieCard key={m.id} movie={m} />
+              <div key={m.id} className="profile-card-wrap">
+                <button
+                  type="button"
+                  className="profile-card-remove"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    moviesApi.favorite(m.id).then(() => {
+                      setFavorites((prev) => prev.filter((x) => x.id !== m.id));
+                    }).catch(() => {});
+                  }}
+                  aria-label="Xóa khỏi yêu thích"
+                  title="Xóa khỏi yêu thích"
+                >
+                  <i className="fas fa-times" />
+                </button>
+                <MovieCard movie={m} />
+              </div>
             ))}
           </div>
         )
@@ -145,9 +162,26 @@ export default function Profile() {
         history.length === 0 ? (
           <p className="profile-empty">Chưa xem phim nào.</p>
         ) : (
-          <div className="movie-grid" style={{ marginTop: '24px' }}>
+          <div className="movie-grid profile-card-grid" style={{ marginTop: '24px' }}>
             {history.map((m) => (
-              <MovieCard key={m.id} movie={m} />
+              <div key={m.id} className="profile-card-wrap">
+                <button
+                  type="button"
+                  className="profile-card-remove"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    userApi.removeHistory(m.id).then(() => {
+                      setHistory((prev) => prev.filter((x) => x.id !== m.id));
+                    }).catch(() => {});
+                  }}
+                  aria-label="Xóa khỏi đã xem"
+                  title="Xóa khỏi đã xem"
+                >
+                  <i className="fas fa-times" />
+                </button>
+                <MovieCard movie={m} />
+              </div>
             ))}
           </div>
         )
