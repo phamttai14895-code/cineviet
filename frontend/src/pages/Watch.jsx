@@ -776,6 +776,7 @@ export default function Watch() {
                   onSourceIndexChange={(i) => setCurrentServerIndex(visibleServerIndices[i])}
                   poster={poster}
                   containerRef={containerRef}
+                  controlsVisible={showControls}
                   initialTime={initialTimeSeconds}
                   subtitles={movie.subtitle_url ? [{ url: movie.subtitle_url.startsWith('http') ? movie.subtitle_url : (window.location.origin + (movie.subtitle_url.startsWith('/') ? '' : '/') + movie.subtitle_url), lang: 'vi', label: 'Tiếng Việt' }] : []}
                   autoPlay={autoPlayNextRef.current}

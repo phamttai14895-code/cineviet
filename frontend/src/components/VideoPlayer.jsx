@@ -51,8 +51,8 @@ export default function VideoPlayer({
   resumeHintSeconds = 0,
   resumeHintHasProgress = false,
   resumeHintPct = 0,
-  onResumeHintContinue,
   onResumeHintStartOver,
+  controlsVisible = true,
 }) {
   const urls = sources.length > 0 ? sources.map((s) => s.url).filter(Boolean) : (src ? [src] : []);
   const [adState, setAdState] = useState({ status: 'idle', mediaUrl: null, tracking: null, clickThrough: null });
@@ -449,8 +449,9 @@ export default function VideoPlayer({
 
   if (!currentUrl) return null;
 
+  const hideCenterButton = playing && !controlsVisible;
   return (
-    <div className={`watch-player ${className}`}>
+    <div className={`watch-player ${className} ${hideCenterButton ? 'controls-hidden' : ''}`}>
       <div className={`watch-player-container ${!playing ? 'paused' : ''}`}>
         {resumeHintVisible && (
           <div className="watch-resume-modal-overlay" role="dialog" aria-labelledby="watch-resume-modal-title" aria-modal="true">

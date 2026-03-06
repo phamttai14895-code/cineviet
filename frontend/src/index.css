@@ -10311,6 +10311,12 @@
   box-shadow: 0 0 40px var(--accent-glow);
   pointer-events: none; border: none;
 }
+/* Ẩn nút play/pause giữa màn khi thanh control đã ẩn (prop controlsVisible từ Watch) */
+.watch-player.controls-hidden .watch-center-play {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  visibility: hidden;
+}
 .watch-center-play:hover {
   background: var(--accent-hover);
   box-shadow: 0 0 48px var(--accent-glow);
@@ -10374,12 +10380,6 @@
 }
 .watch-player-wrap.hide-cursor { cursor: none; }
 .watch-player-wrap.hide-cursor .watch-controls-overlay { opacity: 0; }
-/* Ẩn nút play/pause giữa màn khi thanh control đã ẩn (fullscreen hoặc không) */
-.watch-player-wrap.hide-cursor .watch-center-play {
-  opacity: 0 !important;
-  pointer-events: none !important;
-  visibility: hidden;
-}
 
 .watch-progress-wrap {
   position: relative;
