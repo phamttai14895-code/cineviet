@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { usePublicSettings } from '../context/PublicSettingsContext';
+import { useAdblock } from '../context/AdblockContext';
 
 /**
  * Áp dụng cài đặt bảo vệ từ admin: thông báo adblock, chặn chuột phải, F12, Ctrl+U, v.v.
@@ -9,7 +10,7 @@ import { usePublicSettings } from '../context/PublicSettingsContext';
 export default function ProtectionGuard() {
   const location = useLocation();
   const settings = usePublicSettings();
-  const [adblockDetected, setAdblockDetected] = useState(false);
+  const { adblockDetected, setAdblockDetected } = useAdblock();
   const [adblockNoticeDismissed, setAdblockNoticeDismissed] = useState(false);
 
   const isAdmin = location.pathname.startsWith('/admin');
@@ -18,7 +19,7 @@ export default function ProtectionGuard() {
   const blockDevtools = !isAdmin && settings?.protection_block_devtools === true;
   const blockViewSource = !isAdmin && settings?.protection_block_view_source === true;
 
-  // Phát hiện trình chặn quảng cáo (bait element mà adblock thường ẩn)
+  // Phát hiện trình chặn quảng cáo (bait element mà adblock thường ẩn) — cập nhật context để trang Watch chặn video
   useEffect(() => {
     if (!antiAdblock) return;
     const check = () => {
@@ -36,7 +37,7 @@ export default function ProtectionGuard() {
     };
     const t = setTimeout(check, 1500);
     return () => clearTimeout(t);
-  }, [antiAdblock]);
+  }, [antiAdblock, setAdblockDetected]);
 
   // Chặn chuột phải
   useEffect(() => {

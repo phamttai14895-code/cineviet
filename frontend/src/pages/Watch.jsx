@@ -15,6 +15,7 @@ import WatchLoginBanner from '../components/WatchLoginBanner';
 import WatchRateBanner from '../components/WatchRateBanner';
 import { useSeo } from '../hooks/useSeo.js';
 import { usePublicSettings } from '../context/PublicSettingsContext';
+import { useAdblock } from '../context/AdblockContext';
 import { noticeWithLinks } from '../utils/noticeWithLinks';
 
 export default function Watch() {
@@ -79,7 +80,9 @@ export default function Watch() {
   })();
   useSeo(movie?.title, movie?.overview, seoImage);
   const publicSettings = usePublicSettings();
+  const { adblockDetected } = useAdblock();
   const watchNotice = (publicSettings?.watch_notice || '').trim();
+  const blockVideoWhenAdblock = !!(adblockDetected && publicSettings?.protection_anti_adblock_notice);
   const containerRef = useRef(null);
   const controlsHideRef = useRef(null);
   const reportTimeoutRef = useRef(null);
@@ -729,6 +732,15 @@ export default function Watch() {
             <div className="watch-require-login-placeholder">
               <img src={poster} alt="" onError={onPosterError} />
               <p className="watch-require-login-placeholder-text">Đăng nhập để xem phim</p>
+            </div>
+          ) : blockVideoWhenAdblock ? (
+            <div className="watch-adblock-placeholder" role="alert">
+              <img src={poster} alt="" onError={onPosterError} />
+              <div className="watch-adblock-placeholder-content">
+                <i className="fas fa-ban watch-adblock-placeholder-icon" aria-hidden />
+                <p className="watch-adblock-placeholder-text">Phát hiện trình chặn quảng cáo</p>
+                <p className="watch-adblock-placeholder-hint">Vui lòng tắt trình chặn quảng cáo (AdBlock) cho trang này để phát video.</p>
+              </div>
             </div>
           ) : videoUrl ? (
             (!user || progressLoaded) ? (

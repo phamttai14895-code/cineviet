@@ -11664,6 +11664,50 @@
   margin: 0;
 }
 
+.watch-adblock-placeholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-lg);
+  background: rgba(0, 0, 0, 0.92);
+  color: var(--text);
+  padding: var(--space-xl);
+}
+.watch-adblock-placeholder img {
+  max-width: 200px;
+  max-height: 300px;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  border-radius: var(--radius);
+  opacity: 0.5;
+}
+.watch-adblock-placeholder-content {
+  text-align: center;
+  max-width: 360px;
+}
+.watch-adblock-placeholder-icon {
+  font-size: 2.5rem;
+  color: var(--red);
+  margin-bottom: var(--space-sm);
+  display: block;
+}
+.watch-adblock-placeholder-text {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin: 0 0 var(--space-sm);
+  color: #fff;
+}
+.watch-adblock-placeholder-hint {
+  font-size: 0.95rem;
+  margin: 0;
+  color: var(--text-soft);
+  line-height: 1.5;
+}
+
 .watch-player-loading-progress {
   position: absolute;
   inset: 0;

@@ -11,6 +11,7 @@ import GoogleAnalytics4 from './GoogleAnalytics4';
 import GoogleTagManager from './GoogleTagManager';
 import ProtectionGuard from './ProtectionGuard';
 import { PublicSettingsProvider } from '../context/PublicSettingsContext';
+import { AdblockProvider } from '../context/AdblockContext';
 import { useToast } from '../context/ToastContext';
 
 export default function Layout() {
@@ -29,10 +30,11 @@ export default function Layout() {
 
   return (
     <PublicSettingsProvider>
-      <GoogleTagManager />
-      <GoogleAnalytics4 />
-      <ProtectionGuard />
-      <div className="layout">
+      <AdblockProvider>
+        <GoogleTagManager />
+        <GoogleAnalytics4 />
+        <ProtectionGuard />
+        <div className="layout">
         <WebSiteJsonLd />
         <Header />
         {!isMovieDetail && <Breadcrumb />}
@@ -44,6 +46,7 @@ export default function Layout() {
         <ThemeToggle />
         <BackToTopButton />
       </div>
+      </AdblockProvider>
     </PublicSettingsProvider>
   );
 }
