@@ -214,6 +214,7 @@ router.get('/notifications', (req, res) => {
     const movieIds = favAndWatched.map((r) => r.movie_id).filter(Boolean);
     if (movieIds.length > 0) {
       const placeholders = movieIds.map(() => '?').join(',');
+      // Chỉ thông báo phim chưa ra hết tập (chưa hoàn thành): total_episodes null/0 hoặc episode_current < total_episodes
       const series = db.prepare(`
         SELECT m.id, m.title, m.slug, m.total_episodes, m.episode_current, COALESCE(m.updated_at, m.created_at) as at
         FROM movies m
@@ -221,6 +222,7 @@ router.get('/notifications', (req, res) => {
           AND m.type = 'series'
           AND ${statusCond}
           AND datetime(COALESCE(m.updated_at, m.created_at)) >= datetime('now','+7 hours','-7 days')
+          AND (m.total_episodes IS NULL OR m.total_episodes = 0 OR m.episode_current IS NULL OR m.episode_current < m.total_episodes)
         ORDER BY m.updated_at DESC
         LIMIT 15
       `).all(...movieIds);
