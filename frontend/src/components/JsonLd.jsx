@@ -68,6 +68,34 @@ export function BreadcrumbJsonLd({ items }) {
   return <JsonLdScript data={data} />;
 }
 
+/**
+ * ItemList JSON-LD cho trang danh sách phim (phim-moi, the-loai, quoc-gia...) — SEO rich result.
+ */
+export function ItemListJsonLd({ name, description, url, items = [] }) {
+  if (!name || !url) return null;
+  const base = getBaseUrl();
+  const fullUrl = url.startsWith('http') ? url : base + (url.startsWith('/') ? url : '/' + url);
+  const data = {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    name: name.trim(),
+    ...(description && { description: description.trim() }),
+    url: fullUrl,
+    numberOfItems: items.length,
+    itemListElement: items.slice(0, 20).map((item, i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      item: {
+        '@type': 'Movie',
+        name: item.title ? toTitleCase(item.title) : '',
+        ...(item.slug || item.id ? { url: base + '/movie/' + (item.slug || item.id) } : {}),
+        ...(item.poster ? { image: item.poster.startsWith('http') ? item.poster : base + (item.poster.startsWith('/') ? item.poster : '/' + item.poster) } : {}),
+      },
+    })),
+  };
+  return <JsonLdScript data={data} />;
+}
+
 function JsonLdScript({ data }) {
   const str = JSON.stringify(data);
   useEffect(() => {

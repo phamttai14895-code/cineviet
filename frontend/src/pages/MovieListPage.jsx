@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { movies as moviesApi } from '../api/client';
 import MovieCard from '../components/MovieCard';
 import TrendingBlock from '../components/TrendingBlock.jsx';
+import { ItemListJsonLd } from '../components/JsonLd';
 import { usePublicSettings } from '../context/PublicSettingsContext';
 import { useSeo } from '../hooks/useSeo.js';
 
@@ -134,6 +135,12 @@ export default function MovieListPage({ category }) {
 
   return (
     <div className="page-browse page-movie-list">
+      <ItemListJsonLd
+        name={config.title}
+        description={config.subtitle}
+        url={`/${category}`}
+        items={data.movies}
+      />
       <div className="container">
         {TRENDING_CONFIG[category] && <TrendingBlock {...TRENDING_CONFIG[category]} />}
         <div className="browse-header">

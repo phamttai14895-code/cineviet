@@ -19,6 +19,7 @@ import actorsRoutes from './routes/actors.js';
 import imageRoutes from './routes/image.js';
 import homeRoutes from './routes/home.js';
 import sitemapHandler from './routes/sitemap.js';
+import { getMetaByPath, renderSeoHtml, isBotUserAgent } from './routes/seoMeta.js';
 import { csrfMiddleware } from './middleware/csrf.js';
 import { registerWatchParty, getPublicRooms } from './watchParty.js';
 
@@ -30,6 +31,33 @@ app.use(cors({ origin: process.env.FRONTEND_URL || 'http://localhost:5173', cred
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+
+// SEO cho bot: trả HTML có og/twitter meta khi crawler request (Nginx proxy bot tới đây)
+app.get('/_seo', (req, res) => {
+  const pathReq = (req.query.path || req.query.url || '').trim().replace(/^\?/, '') || '/';
+  const base = (process.env.FRONTEND_URL || '').replace(/\/$/, '') || (req.protocol + '://' + (req.get('host') || 'localhost'));
+  const baseUrl = base.startsWith('http') ? base : `https://${base}`;
+  if (!isBotUserAgent(req.get('user-agent'))) {
+    return res.redirect(302, pathReq.startsWith('http') ? pathReq : baseUrl + (pathReq.startsWith('/') ? pathReq : '/' + pathReq));
+  }
+  const meta = getMetaByPath(pathReq, baseUrl);
+  const html = meta ? renderSeoHtml(meta, baseUrl) : null;
+  if (!html) {
+    return res.redirect(302, pathReq.startsWith('http') ? pathReq : baseUrl + (pathReq.startsWith('/') ? pathReq : '/' + pathReq));
+  }
+  res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  res.send(html);
+});
+
+// API meta (JSON) — dùng cho prerender hoặc debug
+app.get('/api/meta', (req, res) => {
+  const pathReq = (req.query.path || '').trim() || '/';
+  const base = (process.env.FRONTEND_URL || '').replace(/\/$/, '') || (req.protocol + '://' + (req.get('host') || 'localhost'));
+  const baseUrl = base.startsWith('http') ? base : `https://${base}`;
+  const meta = getMetaByPath(pathReq, baseUrl);
+  if (!meta) return res.status(404).json({ error: 'Không tìm thấy meta cho path này' });
+  res.json(meta);
+});
 
 // Health check — đăng ký sớm để không bị middleware /api chặn (proxy/load balancer hay gọi)
 app.get('/api/health', (req, res) => res.json({ ok: true }));
@@ -154,7 +182,7 @@ app.get('/api/ads/zone/:zone', (req, res) => {
 // Sitemap XML cho crawler (base URL từ FRONTEND_URL hoặc request)
 app.get('/api/sitemap.xml', sitemapHandler);
 
-// robots.txt — cho crawler biết Sitemap (URL tuyệt đối). Gọi từ cùng host backend hoặc cấu hình proxy trỏ /robots.txt về đây.
+// robots.txt — Sitemap URL lấy từ FRONTEND_URL. Khi chạy sau Nginx: đặt FRONTEND_URL=https://domain.com (HTTPS đầy đủ) để crawler nhận đúng URL.
 app.get('/robots.txt', (req, res) => {
   const base = (process.env.FRONTEND_URL || '').replace(/\/$/, '') || (req.protocol + '://' + (req.get('host') || 'localhost'));
   const baseUrl = base.startsWith('http') ? base : req.protocol + '://' + (req.get('host') || '');

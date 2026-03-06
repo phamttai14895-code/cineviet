@@ -9,7 +9,8 @@
     "db:init": "node scripts/initDb.js",
     "reset-users": "node scripts/resetUsers.js",
     "actors:sync": "node scripts/crawlActorsFromTmdb.js",
-    "slug:normalize": "node scripts/normalizeSlugs.js"
+    "slug:normalize": "node scripts/normalizeSlugs.js",
+    "test": "node --test src/utils/turnstile.test.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

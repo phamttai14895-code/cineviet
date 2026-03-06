@@ -11,7 +11,21 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const router = Router();
 const uploadDir = path.join(__dirname, '../../uploads');
 if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
-const upload = multer({ dest: uploadDir });
+
+// Chỉ cho phép ảnh: MIME image/* và extension .jpg, .jpeg, .png, .gif, .webp
+const ALLOWED_AVATAR_MIMES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+const ALLOWED_AVATAR_EXT = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
+const avatarUpload = multer({
+  dest: uploadDir,
+  fileFilter(req, file, cb) {
+    const mimetype = (file.mimetype || '').toLowerCase();
+    const ext = path.extname((file.originalname || '').toLowerCase());
+    if (ALLOWED_AVATAR_MIMES.includes(mimetype) && ALLOWED_AVATAR_EXT.includes(ext)) {
+      return cb(null, true);
+    }
+    cb(null, false);
+  },
+});
 
 router.use(requireAuth);
 
@@ -56,8 +70,8 @@ function ensureWatchReportsTable() {
 }
 
 // Upload avatar (click vào avatar -> chọn file)
-router.post('/avatar', upload.single('avatar'), (req, res) => {
-  if (!req.file) return res.status(400).json({ error: 'Chưa chọn ảnh' });
+router.post('/avatar', avatarUpload.single('avatar'), (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'Chưa chọn ảnh hoặc định dạng không hợp lệ. Chỉ chấp nhận ảnh: JPG, PNG, GIF, WebP.' });
   const avatarPath = '/uploads/' + req.file.filename;
   db.prepare("UPDATE users SET avatar = ?, updated_at = datetime('now','+7 hours') WHERE id = ?").run(avatarPath, req.user.id);
   const user = db.prepare('SELECT id, email, name, avatar, role FROM users WHERE id = ?').get(req.user.id);
@@ -201,7 +215,7 @@ router.get('/notifications', (req, res) => {
     if (movieIds.length > 0) {
       const placeholders = movieIds.map(() => '?').join(',');
       const series = db.prepare(`
-        SELECT m.id, m.title, m.slug, m.total_episodes, COALESCE(m.updated_at, m.created_at) as at
+        SELECT m.id, m.title, m.slug, m.total_episodes, m.episode_current, COALESCE(m.updated_at, m.created_at) as at
         FROM movies m
         WHERE m.id IN (${placeholders})
           AND m.type = 'series'
@@ -211,10 +225,11 @@ router.get('/notifications', (req, res) => {
         LIMIT 15
       `).all(...movieIds);
       series.forEach((r) => {
+        const tapMoi = r.episode_current != null ? r.episode_current : (r.total_episodes || 'mới');
         items.push({
           type: 'tap_moi',
           id: r.id,
-          title: `${r.title} tập ${r.total_episodes || 'mới'} đã ra`,
+          title: `${r.title} mới cập nhật tập ${tapMoi}${r.total_episodes ? ` / ${r.total_episodes}` : ''}`,
           description: 'Tập mới vừa được cập nhật',
           link: `/movie/${r.slug || r.id}`,
           at: r.at,

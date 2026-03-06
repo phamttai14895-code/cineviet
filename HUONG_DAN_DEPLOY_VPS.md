@@ -165,7 +165,7 @@ JWT_SECRET=your-output-from-openssl-rand-base64-32
 
 Các biến tùy chọn (Turnstile, SMTP, Google, Facebook, TMDB, …) xem chi tiết tại **[4.3 Cấu hình từng tính năng](#43-cấu-hình-từng-tính-năng-turnstile-email-google-facebook--)** bên dưới. File mẫu đầy đủ: `backend/.env.example`.
 
-- **FRONTEND_URL:** Đúng domain production (https://...), dùng cho CORS, OAuth callback, sitemap, email.
+- **FRONTEND_URL:** Đúng domain production (https://...), dùng cho CORS, OAuth callback, sitemap, email. **Khi chạy sau Nginx:** bắt buộc đặt dạng HTTPS đầy đủ (ví dụ `https://cineviet.vn`) để URL trong `robots.txt` và Sitemap trả về đúng cho crawler (Google, Bing, v.v.); nếu để `http://` hoặc thiếu, crawler có thể lấy sai URL.
 
 ### 4.3 Cấu hình từng tính năng (Turnstile, Email, Google, Facebook, …)
 
@@ -416,6 +416,14 @@ server {
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "upgrade";
         proxy_set_header Host $host;
+    }
+
+    # SEO: backend phục vụ GET /_seo?path=/movie/xxx — trả HTML có og/twitter meta cho bot. Proxy để Nginx có thể gửi bot tới đây (xem mục SEO nâng cao trong doc).
+    location = /_seo {
+        proxy_pass http://127.0.0.1:5000/_seo;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-Proto $scheme;
     }
 
     # robots.txt và sitemap do backend phục vụ
@@ -690,6 +698,9 @@ Sau khi site chạy ổn định và có **robots.txt** + **sitemap.xml** trả 
 **Lưu ý:**  
 - **robots.txt** của CineViet đã có dòng `Sitemap: https://<domain>/api/sitemap.xml` (backend sinh từ `FRONTEND_URL`). Google có thể tự tìm sitemap qua robots.txt, nhưng khai báo thủ công trong Search Console giúp theo dõi trạng thái và lỗi rõ ràng hơn.  
 - Sitemap XML do backend phục vụ tại `GET /api/sitemap.xml` (danh sách URL trang chủ, danh mục, phim, v.v.). Đảm bảo Nginx proxy `/api/sitemap.xml` về backend như trong mục 7.
+
+**11.1.1 SEO nâng cao: meta cho bot (chia sẻ link Facebook, Telegram)**  
+Backend cung cấp `GET /_seo?path=/movie/xxx` hoặc `path=/dien-vien/xxx`: khi **User-Agent** là bot (Facebook, Telegram, Google…), backend trả về HTML có sẵn thẻ og:title, og:description, og:image đúng theo phim/diễn viên, giúp link chia sẻ hiển thị đúng ảnh và tiêu đề. Nginx đã có `location = /_seo` proxy tới backend (mục 7). Để bot tự nhận meta khi truy cập trực tiếp URL như `https://site.com/movie/xyz`, bạn có thể dùng dịch vụ prerender (Prerender.io, Rendertron) hoặc cấu hình Nginx map + rewrite gửi request của bot tới `/_seo?path=$request_uri` (tài liệu Nginx có ví dụ điều kiện theo `$http_user_agent`).
 
 ### 11.2 Crawl lỗi 504 (Request failed with status code 504)
 

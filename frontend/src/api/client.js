@@ -22,6 +22,9 @@ client.interceptors.response.use(
     return r;
   },
   (err) => {
+    if (import.meta.env.DEV && err?.message) {
+      console.warn('[API]', err.response?.status, err.response?.data?.error || err.message, err.config?.url);
+    }
     if (err.response?.status === 401) {
       localStorage.removeItem('token');
       window.dispatchEvent(new Event('auth-logout'));
