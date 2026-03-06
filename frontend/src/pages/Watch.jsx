@@ -1035,7 +1035,7 @@ export default function Watch() {
             <section id="comments" className="watch-below-comments">
               <h3 className="watch-below-comments-title">
                 <i className="fas fa-comment" aria-hidden /> Bình luận
-                <span className="watch-below-comments-count" aria-label={`${comments.length} bình luận`}>{comments.length}</span>
+                <span className="watch-below-comments-count" aria-label={`${comments.filter((c) => !c.parent_id).length} bình luận`}>{comments.filter((c) => !c.parent_id).length}</span>
               </h3>
               {user ? (
                 <form className="watch-below-comment-form" onSubmit={handleSubmitComment}>

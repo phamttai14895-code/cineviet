@@ -283,6 +283,7 @@ export default function MovieDetail() {
     return max > 0 ? max : totalEps;
   };
   const episodesToShow = getMaxAvailableEpisodes();
+  const isPhimLe = movie.type !== 'series' && movie.type !== 'anime' && (movie.type === 'movie' || (totalEps || 0) <= 1);
   const viewCount = movie.view_count != null ? Number(movie.view_count) : null;
   const updatedAt = movie.updated_at ? new Date(movie.updated_at).toLocaleDateString('vi-VN', { day: 'numeric', month: 'numeric', year: 'numeric' }) : null;
 
@@ -569,22 +570,28 @@ export default function MovieDetail() {
                   )}
                 </div>
                 <div className="movie-detail-episodes-list">
-                  {Array.from({ length: episodesToShow }, (_, i) => i + 1).map((ep) => (
-                    <Link
-                      key={ep}
-                      to={`/watch/${movie.id}?ep=${ep}${uniqueServers.length > 0 ? `&server=${selectedServerIndex}` : ''}`}
-                      className={`movie-detail-ep-btn${episodeCurrent === ep ? ' active' : ''}`}
-                    >
-                      Tập {String(ep).padStart(2, '0')}
+                  {isPhimLe ? (
+                    <Link to={`/watch/${movie.id}${uniqueServers.length > 0 ? `?server=${selectedServerIndex}` : ''}`} className="movie-detail-ep-btn active">
+                      <i className="fas fa-play" aria-hidden /> Full
                     </Link>
-                  ))}
+                  ) : (
+                    Array.from({ length: episodesToShow }, (_, i) => i + 1).map((ep) => (
+                      <Link
+                        key={ep}
+                        to={`/watch/${movie.id}?ep=${ep}${uniqueServers.length > 0 ? `&server=${selectedServerIndex}` : ''}`}
+                        className={`movie-detail-ep-btn${episodeCurrent === ep ? ' active' : ''}`}
+                      >
+                        Tập {String(ep).padStart(2, '0')}
+                      </Link>
+                    ))
+                  )}
                 </div>
               </section>
             )}
 
             <section id="movie-detail-comments" className="movie-detail-section movie-detail-comments">
               <h2 className="movie-detail-section-title">
-                <i className="fas fa-comments" aria-hidden /> Bình luận ({comments.length})
+                <i className="fas fa-comments" aria-hidden /> Bình luận ({comments.filter((c) => !c.parent_id).length})
               </h2>
               {user ? (
                 <form className="movie-detail-comment-form" onSubmit={handleSubmitComment}>
