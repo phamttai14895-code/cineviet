@@ -28,6 +28,11 @@ export default function AdminMovies() {
   const [total, setTotal] = useState(0);
   const [limit, setLimit] = useState(10);
   const [selectedIds, setSelectedIds] = useState(new Set());
+  const [featuredModalOpen, setFeaturedModalOpen] = useState(false);
+  const [featuredMovies, setFeaturedMovies] = useState([]);
+  const [featuredLoading, setFeaturedLoading] = useState(false);
+  const [featuredSaving, setFeaturedSaving] = useState(false);
+  const [featuredDragIndex, setFeaturedDragIndex] = useState(null);
 
   const load = () => {
     setLoading(true);
@@ -136,6 +141,59 @@ export default function AdminMovies() {
   const totalPages = Math.max(1, Math.ceil(total / limit));
   const maxViews = Math.max(1, ...movies.map((m) => m.view_count || 0));
 
+  const openFeaturedModal = () => {
+    setFeaturedModalOpen(true);
+    setFeaturedLoading(true);
+    admin.featuredList()
+      .then((r) => setFeaturedMovies(Array.isArray(r.data?.movies) ? r.data.movies : []))
+      .catch(() => toast.error('Không tải được danh sách phim nổi bật'))
+      .finally(() => setFeaturedLoading(false));
+  };
+
+  const handleFeaturedDragStart = (e, index) => {
+    setFeaturedDragIndex(index);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', String(index));
+    e.target.classList.add('admin-featured-dragging');
+  };
+  const handleFeaturedDragEnd = (e) => {
+    e.target.classList.remove('admin-featured-dragging');
+    setFeaturedDragIndex(null);
+  };
+  const handleFeaturedDragOver = (e) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  };
+  const handleFeaturedDrop = (e, dropIndex) => {
+    e.preventDefault();
+    const dragIndex = featuredDragIndex ?? parseInt(e.dataTransfer.getData('text/plain'), 10);
+    if (Number.isNaN(dragIndex) || dragIndex === dropIndex) return;
+    setFeaturedMovies((prev) => {
+      const next = [...prev];
+      const [removed] = next.splice(dragIndex, 1);
+      next.splice(dropIndex, 0, removed);
+      return next;
+    });
+    setFeaturedDragIndex(null);
+  };
+
+  const saveFeaturedOrder = async () => {
+    const order = featuredMovies.map((m) => m.id);
+    if (order.length === 0) {
+      toast.info('Không có phim nổi bật để lưu.');
+      return;
+    }
+    setFeaturedSaving(true);
+    try {
+      await admin.updateFeaturedOrder(order);
+      toast.success('Đã lưu thứ tự phim nổi bật. Trang chủ sẽ hiển thị đúng thứ tự.');
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Không lưu được thứ tự.');
+    } finally {
+      setFeaturedSaving(false);
+    }
+  };
+
   return (
     <div className="admin-movies-page">
       <div className="admin-movies-header">
@@ -191,6 +249,9 @@ export default function AdminMovies() {
           <button type="button" className="btn btn-danger admin-movies-add" onClick={handleDeleteAll} title="Xóa toàn bộ phim trong hệ thống">
             <i className="fas fa-trash-alt" /> Xóa toàn bộ phim
           </button>
+          <button type="button" className="btn admin-movies-add" onClick={openFeaturedModal} title="Sắp xếp thứ tự phim nổi bật trên trang chủ">
+            <i className="fas fa-star" /> Phim nổi bật
+          </button>
           <Link to="/admin/crawl" className="btn admin-movies-add admin-movies-crawl-btn">
             <i className="fas fa-cloud-download-alt" /> Crawl phim
           </Link>
@@ -199,6 +260,60 @@ export default function AdminMovies() {
           </Link>
         </div>
       </div>
+
+      {featuredModalOpen && (
+        <div className="admin-featured-modal-backdrop" onClick={() => setFeaturedModalOpen(false)} role="presentation">
+          <div className="admin-featured-modal" onClick={(e) => e.stopPropagation()} role="dialog" aria-labelledby="admin-featured-modal-title">
+            <div className="admin-featured-modal-header">
+              <h2 id="admin-featured-modal-title">Phim nổi bật (trang chủ)</h2>
+              <button type="button" className="admin-featured-modal-close" onClick={() => setFeaturedModalOpen(false)} aria-label="Đóng">
+                <i className="fas fa-times" />
+              </button>
+            </div>
+            <div className="admin-featured-modal-body">
+              <p className="admin-featured-modal-desc">Kéo thả để thay đổi thứ tự hiển thị trên trang chủ.</p>
+              {featuredLoading ? (
+                <p className="loading-wrap">Đang tải...</p>
+              ) : featuredMovies.length === 0 ? (
+                <p className="admin-featured-modal-empty">Chưa có phim nổi bật. Đánh dấu phim là &quot;Nổi bật&quot; khi thêm/sửa phim.</p>
+              ) : (
+                <ul className="admin-featured-modal-list">
+                  {featuredMovies.map((m, index) => (
+                    <li
+                      key={m.id}
+                      className={`admin-featured-modal-item ${featuredDragIndex === index ? 'admin-featured-dragging' : ''}`}
+                      draggable
+                      onDragStart={(e) => handleFeaturedDragStart(e, index)}
+                      onDragEnd={handleFeaturedDragEnd}
+                      onDragOver={handleFeaturedDragOver}
+                      onDrop={(e) => handleFeaturedDrop(e, index)}
+                    >
+                      <span className="admin-featured-drag-handle" aria-label="Kéo để đổi thứ tự">
+                        <i className="fas fa-grip-vertical" />
+                      </span>
+                      <span className="admin-featured-modal-num">{index + 1}</span>
+                      <img
+                        src={imageDisplayUrl(m.poster) || POSTER_PLACEHOLDER}
+                        alt=""
+                        className="admin-featured-modal-poster"
+                        loading="lazy"
+                        onError={(e) => { if (e.target.src !== POSTER_PLACEHOLDER) { e.target.onerror = null; e.target.src = POSTER_PLACEHOLDER; } }}
+                      />
+                      <span className="admin-featured-modal-title">{toTitleCase(m.title)}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+            <div className="admin-featured-modal-footer">
+              <button type="button" className="btn btn-ghost" onClick={() => setFeaturedModalOpen(false)}>Đóng</button>
+              <button type="button" className="btn btn-primary" onClick={saveFeaturedOrder} disabled={featuredLoading || featuredMovies.length === 0 || featuredSaving}>
+                {featuredSaving ? 'Đang lưu...' : 'Lưu thứ tự'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="admin-movies-table-wrap">
         {loading ? (

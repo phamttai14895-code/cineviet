@@ -492,6 +492,29 @@ router.get('/movies', (req, res) => {
   res.json({ movies, total, page, limit });
 });
 
+// Danh sách phim nổi bật (theo thứ tự hiển thị trang chủ)
+router.get('/featured', (req, res) => {
+  const list = db.prepare(`
+    SELECT m.id, m.title, m.title_en, m.poster, m.backdrop, m.slug, m.release_year, m.rating, m.featured_order, m.created_at
+    FROM movies m
+    WHERE (m.status IS NULL OR m.status = 'published') AND (m.featured = 1 OR m.featured = ?)
+    ORDER BY (CASE WHEN m.featured_order IS NULL THEN 1 ELSE 0 END), m.featured_order ASC, m.created_at DESC
+  `).all(1);
+  res.json({ movies: list });
+});
+
+// Cập nhật thứ tự phim nổi bật (body: { order: number[] } — id theo thứ tự muốn hiển thị)
+router.put('/featured/order', (req, res) => {
+  const ids = Array.isArray(req.body?.order) ? req.body.order.filter((id) => Number.isInteger(Number(id)) && Number(id) > 0) : [];
+  const run = db.transaction(() => {
+    ids.forEach((id, index) => {
+      db.prepare('UPDATE movies SET featured_order = ? WHERE id = ? AND (featured = 1 OR featured = ?)').run(index, id, 1);
+    });
+  });
+  run();
+  res.json({ ok: true });
+});
+
 // Chi tiết một phim (để sửa)
 router.get('/movies/:id', (req, res) => {
   const id = parseInt(req.params.id);

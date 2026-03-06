@@ -79,6 +79,12 @@ router.get('/', (req, res) => {
     ensureViewCountDayMonthReset();
   }
 
+  // Phim nổi bật: sắp theo featured_order (kéo thả trong admin), rồi created_at
+  const isFeaturedList = featured === '1' || featured === 'true';
+  const orderClause = isFeaturedList
+    ? 'ORDER BY (CASE WHEN m.featured_order IS NULL THEN 1 ELSE 0 END), m.featured_order ASC, m.created_at DESC'
+    : `ORDER BY m.${validSort} ${validOrder}`;
+
   const countRow = db.prepare(`
     SELECT COUNT(DISTINCT m.id) as total FROM movies m
     LEFT JOIN movie_genres mg ON m.id = mg.movie_id
@@ -91,7 +97,7 @@ router.get('/', (req, res) => {
     LEFT JOIN genres g ON mg.genre_id = g.id
     ${whereClause}
     GROUP BY m.id
-    ORDER BY m.${validSort} ${validOrder}
+    ${orderClause}
     LIMIT ? OFFSET ?
   `).all(...params, limitNum, offset);
 

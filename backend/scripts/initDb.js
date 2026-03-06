@@ -183,6 +183,8 @@ const hasChieuRap = cols.some((c) => c.name === 'chieu_rap');
 if (!hasChieuRap) db.exec('ALTER TABLE movies ADD COLUMN chieu_rap INTEGER DEFAULT 0');
 const hasThuyetMinh = cols.some((c) => c.name === 'thuyet_minh');
 if (!hasThuyetMinh) db.exec('ALTER TABLE movies ADD COLUMN thuyet_minh INTEGER DEFAULT 0');
+const hasFeaturedOrder = cols.some((c) => c.name === 'featured_order');
+if (!hasFeaturedOrder) db.exec('ALTER TABLE movies ADD COLUMN featured_order INTEGER');
 
 // Migration: users - status, is_vip
 const userCols = db.prepare("PRAGMA table_info(users)").all();
