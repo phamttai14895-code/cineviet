@@ -11027,6 +11027,18 @@
 .watch-notice-bar .watch-notice-text {
   line-height: 1.4;
   max-width: 56rem;
+  white-space: pre-line;
+}
+.watch-notice-bar .watch-notice-text .notice-link,
+.home-notice-bar .home-notice-text .notice-link {
+  color: var(--accent);
+  font-weight: 600;
+  text-decoration: underline;
+}
+.watch-notice-bar .watch-notice-text .notice-link:hover,
+.home-notice-bar .home-notice-text .notice-link:hover {
+  color: var(--accent-hover);
+  text-decoration: underline;
 }
 [data-theme='light'] .watch-notice-bar {
   background: var(--accent-soft);
@@ -11075,6 +11087,7 @@
 .home-notice-bar .home-notice-text {
   line-height: 1.4;
   max-width: 56rem;
+  white-space: pre-line;
 }
 [data-theme='light'] .home-notice-bar {
   background: var(--accent-soft);

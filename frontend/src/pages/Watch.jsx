@@ -15,6 +15,7 @@ import WatchLoginBanner from '../components/WatchLoginBanner';
 import WatchRateBanner from '../components/WatchRateBanner';
 import { useSeo } from '../hooks/useSeo.js';
 import { usePublicSettings } from '../context/PublicSettingsContext';
+import { noticeWithLinks } from '../utils/noticeWithLinks';
 
 export default function Watch() {
   const { id } = useParams();
@@ -920,7 +921,7 @@ export default function Watch() {
       {isSeries && watchNotice && (
         <div className="watch-notice-bar" role="status">
           <i className="fas fa-info-circle watch-notice-icon" aria-hidden />
-          <span className="watch-notice-text">{watchNotice}</span>
+          <span className="watch-notice-text">{noticeWithLinks(watchNotice)}</span>
         </div>
       )}
 

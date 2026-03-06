@@ -6,6 +6,7 @@ import FeaturedCarousel from '../components/FeaturedCarousel';
 import ContinueWatchingSection from '../components/ContinueWatchingSection';
 import { useAdSettings, AdBanner } from '../components/AdZones';
 import { getApiBase, usePublicSettings } from '../context/PublicSettingsContext';
+import { noticeWithLinks } from '../utils/noticeWithLinks';
 import HomeTrendingBlock from '../components/HomeTrendingBlock';
 import Top10Carousel from '../components/Top10Carousel';
 import NewMoviesCarousel from '../components/NewMoviesCarousel';
@@ -99,7 +100,7 @@ export default function Home() {
       {homeNotice && (
         <div className="home-notice-bar" role="status">
           <i className="fas fa-info-circle home-notice-icon" aria-hidden />
-          <span className="home-notice-text">{homeNotice}</span>
+          <span className="home-notice-text">{noticeWithLinks(homeNotice)}</span>
         </div>
       )}
 
