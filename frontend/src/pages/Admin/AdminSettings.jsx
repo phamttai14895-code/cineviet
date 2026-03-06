@@ -60,6 +60,7 @@ export default function AdminSettings() {
   const [savingGa4, setSavingGa4] = useState(false);
   const [savingGtm, setSavingGtm] = useState(false);
   const [watchNotice, setWatchNotice] = useState('');
+  const [homeNotice, setHomeNotice] = useState('');
   const [socialFacebook, setSocialFacebook] = useState('');
   const [socialTelegram, setSocialTelegram] = useState('');
   const [socialEmail, setSocialEmail] = useState('');
@@ -86,6 +87,7 @@ export default function AdminSettings() {
         setGa4MeasurementId(d.ga4_measurement_id || '');
         setGtmContainerId(d.gtm_container_id || '');
         setWatchNotice(d.watch_notice ?? '');
+        setHomeNotice(d.home_notice ?? '');
         setSocialFacebook(d.social_facebook ?? '');
         setSocialTelegram(d.social_telegram ?? '');
         setSocialEmail(d.social_email ?? '');
@@ -117,6 +119,7 @@ export default function AdminSettings() {
         movies_per_page: moviesPerPage,
         ga4_measurement_id: ga4MeasurementId.trim(),
         watch_notice: watchNotice.trim(),
+        home_notice: homeNotice.trim(),
         social_facebook: socialFacebook.trim(),
         social_telegram: socialTelegram.trim(),
         social_email: socialEmail.trim(),
@@ -166,6 +169,7 @@ export default function AdminSettings() {
         site_description: siteDescription,
         movies_per_page: moviesPerPage,
         watch_notice: watchNotice.trim(),
+        home_notice: homeNotice.trim(),
         ...next,
       });
     } catch (e) {
@@ -262,6 +266,35 @@ export default function AdminSettings() {
             />
             <p className="admin-settings-hint">
               Chỉ hiển thị khi xem phim bộ (và anime). Nội dung nằm ngay dưới video player. Để trống sẽ không hiện.
+            </p>
+            <button
+              type="button"
+              className="admin-settings-save-btn"
+              onClick={saveWebsiteInfo}
+              disabled={saving}
+            >
+              <i className="fas fa-save admin-settings-btn-icon" />
+              <span>{saving ? 'Đang lưu...' : 'Lưu'}</span>
+            </button>
+          </div>
+        </div>
+
+        <div className="admin-settings-card">
+          <div className="admin-settings-card-head">
+            <span className="admin-settings-card-icon"><i className="fas fa-home" /></span>
+            <h2>Thông báo trang chủ</h2>
+          </div>
+          <div className="admin-settings-fields">
+            <label className="admin-settings-label">DÒNG THÔNG BÁO DƯỚI PHIM NỔI BẬT</label>
+            <textarea
+              className="admin-settings-textarea"
+              value={homeNotice}
+              onChange={(e) => setHomeNotice(e.target.value)}
+              placeholder="Ví dụ: Chào mừng bạn đến với CineViet. Chúc bạn xem phim vui vẻ!"
+              rows={2}
+            />
+            <p className="admin-settings-hint">
+              Hiển thị ngay dưới khu vực Phim nổi bật trên trang chủ. Để trống sẽ không hiện.
             </p>
             <button
               type="button"

@@ -11041,6 +11041,54 @@
   color: var(--bg);
 }
 
+/* Thông báo trang chủ — dưới phim nổi bật (nội dung từ Cài đặt Admin) */
+.home-notice-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 0.75rem var(--space-lg);
+  margin: 0 var(--space-md) var(--space-lg);
+  border-radius: var(--radius);
+  border-left: 4px solid var(--accent);
+  background: var(--accent-soft);
+  border-bottom: 1px solid var(--border);
+  border-top: 1px solid var(--border);
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text);
+  text-align: center;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+.home-notice-bar .home-notice-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--bg);
+  font-size: 0.8125rem;
+}
+.home-notice-bar .home-notice-text {
+  line-height: 1.4;
+  max-width: 56rem;
+}
+[data-theme='light'] .home-notice-bar {
+  background: var(--accent-soft);
+  border-left-color: var(--accent);
+  border-bottom-color: var(--border-light);
+  border-top-color: var(--border-light);
+  color: var(--text);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+[data-theme='light'] .home-notice-bar .home-notice-icon {
+  background: var(--accent);
+  color: var(--bg);
+}
+
 /* ========== Banner mời đăng nhập (trang xem phim, chưa đăng nhập) — trượt từ dưới lên, click bất kỳ đâu để đóng ========== */
 .watch-login-banner {
   position: fixed;

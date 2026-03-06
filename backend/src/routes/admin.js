@@ -1611,6 +1611,7 @@ router.put('/settings', (req, res) => {
     ad_sidebar_left_link: body.ad_sidebar_left_link !== undefined ? String(body.ad_sidebar_left_link || '').trim() : (current.ad_sidebar_left_link || ''),
     ad_sidebar_right_link: body.ad_sidebar_right_link !== undefined ? String(body.ad_sidebar_right_link || '').trim() : (current.ad_sidebar_right_link || ''),
     watch_notice: body.watch_notice !== undefined ? String(body.watch_notice).trim() : current.watch_notice,
+    home_notice: body.home_notice !== undefined ? String(body.home_notice).trim() : (current.home_notice || ''),
     protection_anti_adblock_notice: body.protection_anti_adblock_notice !== undefined ? ((body.protection_anti_adblock_notice === true || body.protection_anti_adblock_notice === '1') ? '1' : '0') : (current.protection_anti_adblock_notice || '0'),
     protection_block_right_click: body.protection_block_right_click !== undefined ? ((body.protection_block_right_click === true || body.protection_block_right_click === '1') ? '1' : '0') : (current.protection_block_right_click || '0'),
     protection_block_devtools: body.protection_block_devtools !== undefined ? ((body.protection_block_devtools === true || body.protection_block_devtools === '1') ? '1' : '0') : (current.protection_block_devtools || '0'),

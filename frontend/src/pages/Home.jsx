@@ -5,7 +5,7 @@ import HomeMovieCard from '../components/HomeMovieCard';
 import FeaturedCarousel from '../components/FeaturedCarousel';
 import ContinueWatchingSection from '../components/ContinueWatchingSection';
 import { useAdSettings, AdBanner } from '../components/AdZones';
-import { getApiBase } from '../context/PublicSettingsContext';
+import { getApiBase, usePublicSettings } from '../context/PublicSettingsContext';
 import HomeTrendingBlock from '../components/HomeTrendingBlock';
 import Top10Carousel from '../components/Top10Carousel';
 import NewMoviesCarousel from '../components/NewMoviesCarousel';
@@ -28,6 +28,8 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [sectionLimit, setSectionLimit] = useState(getSectionLimit);
   const adSettings = useAdSettings();
+  const publicSettings = usePublicSettings();
+  const homeNotice = (publicSettings?.home_notice || '').trim();
   const apiBase = getApiBase();
   const belowFeaturedEnabled =
     adSettings &&
@@ -92,6 +94,14 @@ export default function Home() {
     <div className="home">
       {/* PHIM NỔI BẬT - Carousel */}
       <FeaturedCarousel items={featured} />
+
+      {/* Thông báo trang chủ — ngay dưới phim nổi bật */}
+      {homeNotice && (
+        <div className="home-notice-bar" role="status">
+          <i className="fas fa-info-circle home-notice-icon" aria-hidden />
+          <span className="home-notice-text">{homeNotice}</span>
+        </div>
+      )}
 
       {/* Banner quảng cáo dưới phim nổi bật */}
       {belowFeaturedEnabled && (
