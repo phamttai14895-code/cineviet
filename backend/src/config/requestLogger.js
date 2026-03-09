@@ -5,12 +5,15 @@
 const MAX_ENTRIES = 500;
 const entries = [];
 
+/** Giờ GMT+7 (Việt Nam) cho log — HH:mm:ss */
 function nowTime() {
-  const d = new Date();
-  const h = String(d.getHours()).padStart(2, '0');
-  const m = String(d.getMinutes()).padStart(2, '0');
-  const s = String(d.getSeconds()).padStart(2, '0');
-  return `${h}:${m}:${s}`;
+  return new Date().toLocaleTimeString('en-GB', {
+    timeZone: 'Asia/Ho_Chi_Minh',
+    hour12: false,
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  });
 }
 
 function levelForStatus(status) {
