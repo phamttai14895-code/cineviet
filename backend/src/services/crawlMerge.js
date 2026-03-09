@@ -1,40 +1,86 @@
 /**
- * Chỉ dùng nguồn KKPhim (PhimAPI): lấy chi tiết phim, trang chủ, tìm kiếm, thể loại, quốc gia, năm.
+ * Crawl phim: ưu tiên KKPhim (PhimAPI) trước, bổ sung Ophim. Link m3u8 luôn ưu tiên KKPhim.
  */
 
-import { phimapi as phimapiUrls } from '../config/crawlSources.js';
-import { fetchPhimApi } from './crawlFetch.js';
-import { normalizePhimApi, normalizeLangKey } from './normalizeMovie.js';
+import { phimapi as phimapiUrls, ophim as ophimUrls } from '../config/crawlSources.js';
+import { fetchPhimApi, fetchOphim } from './crawlFetch.js';
+import { normalizePhimApi, normalizeOphim, normalizeLangKey, mergeMovieData, mergeEpisodesPreferPrimaryLinks } from './normalizeMovie.js';
 
 /**
- * Lấy chi tiết phim theo slug — chỉ từ KKPhim (PhimAPI).
+ * Lấy chi tiết phim theo slug: KKPhim trước, rồi Ophim; merge với ưu tiên KKPhim và link m3u8 từ KKPhim.
  */
 export async function getMovieBySlug(slug) {
-  const res = await fetchPhimApi(phimapiUrls.phim(slug));
-  if (!res || res.status === false || !res.movie || typeof res.movie !== 'object') return null;
+  let primary = null;
+  let secondary = null;
   try {
-    return normalizePhimApi(res);
+    const resPhim = await fetchPhimApi(phimapiUrls.phim(slug));
+    if (resPhim && resPhim.status !== false && resPhim.movie && typeof resPhim.movie === 'object') {
+      primary = normalizePhimApi(resPhim);
+    }
   } catch (e) {
-    console.error('[crawlMerge] normalizePhimApi error for slug:', slug, e);
-    return null;
+    console.error('[crawlMerge] fetchPhimApi error for slug:', slug, e?.message);
   }
+  try {
+    const resOphim = await fetchOphim(ophimUrls.phim(slug));
+    if (resOphim?.data?.item) {
+      secondary = normalizeOphim(resOphim);
+    }
+  } catch (e) {
+    console.error('[crawlMerge] fetchOphim error for slug:', slug, e?.message);
+  }
+  if (primary && secondary) {
+    const merged = mergeMovieData(primary, secondary);
+    merged.episodes = mergeEpisodesPreferPrimaryLinks(primary.episodes || [], secondary.episodes || []);
+    merged.source = 'phimapi';
+    merged.video_url = primary.video_url || secondary.video_url || merged.video_url;
+    return merged;
+  }
+  if (primary) return primary;
+  if (secondary) return secondary;
+  return null;
 }
 
 /**
- * Trang chủ: phim mới cập nhật — chỉ nguồn KKPhim (phimapi).
+ * Trang chủ: phim mới cập nhật — hỗ trợ KKPhim (phimapi) và Ophim; thứ tự ưu tiên phimapi trước.
  */
 export async function getHome(source = 'phimapi', page = 1) {
-  if (source !== 'phimapi') return { items: [], pagination: null };
-  const res = await fetchPhimApi(phimapiUrls.phimMoiCapNhat(page));
-  const rawItems = Array.isArray(res?.items) ? res.items : [];
-  const items = rawItems.map((it) => {
-    try {
-      return { ...it, lang_key: normalizeLangKey(it?.lang_key, it?.lang, it?.lang) };
-    } catch {
-      return it;
-    }
-  });
-  return { items, pagination: res?.pagination || null };
+  if (source === 'phimapi') {
+    const res = await fetchPhimApi(phimapiUrls.phimMoiCapNhat(page));
+    const rawItems = Array.isArray(res?.items) ? res.items : [];
+    const items = rawItems.map((it) => {
+      try {
+        return { ...it, lang_key: normalizeLangKey(it?.lang_key, it?.lang, it?.lang) };
+      } catch {
+        return it;
+      }
+    });
+    return { items, pagination: res?.pagination || null };
+  }
+  if (source === 'ophim') {
+    const res = await fetchOphim(ophimUrls.home(page));
+    const data = res?.data;
+    const rawItems = Array.isArray(data?.items) ? data.items : [];
+    const pagination = data?.params?.pagination;
+    const items = rawItems.map((it) => ({
+      slug: it?.slug,
+      name: it?.name,
+      origin_name: it?.origin_name,
+      category: it?.category || [],
+      country: it?.country || [],
+      type: it?.type,
+      lang: it?.lang,
+      lang_key: it?.lang_key,
+      year: it?.year,
+      episode_current: it?.episode_current,
+      thumb_url: it?.thumb_url,
+      ...it,
+    }));
+    return {
+      items,
+      pagination: pagination ? { totalPages: Math.ceil((pagination.totalItems || 0) / (pagination.totalItemsPerPage || 24)), currentPage: pagination.currentPage || page } : null,
+    };
+  }
+  return { items: [], pagination: null };
 }
 
 /**

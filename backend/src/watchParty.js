@@ -103,8 +103,12 @@ export function registerWatchParty(io) {
       let code = generateRoomCode();
       while (rooms.has(code)) code = generateRoomCode();
 
+      const rawUrl = String(videoUrl || '').trim();
+      const isDirectVideo = /\.(m3u8|mp4|webm|ogg|mov)(\?|$)/i.test(rawUrl);
+      const initialUrl = rawUrl && isDirectVideo ? rawUrl : '';
+
       const hostMember = { socketId: socket.id, name: String(hostName).trim() || 'Chủ phòng' };
-      const room = createRoomState(hostMember, String(videoUrl).trim(), String(movieTitle).trim(), maxMembers, isPublic);
+      const room = createRoomState(hostMember, initialUrl, String(movieTitle).trim(), maxMembers, isPublic);
       room.code = code;
       rooms.set(code, room);
       socket.join(code);
@@ -291,11 +295,20 @@ export function registerWatchParty(io) {
       if (socket.id !== room.hostSocketId) return;
       const url = (data?.url || '').toString().trim();
       const title = (data?.title || 'Phim').toString().trim();
-      if (url) {
-        room.playlist = room.playlist || [];
-        room.playlist.push({ url, title });
-        io.to(code).emit('room-state', sanitizeRoomState(room));
+      const addAndPlay = !!data?.addAndPlay;
+      // Xem chung chỉ dùng link M3U8/MP4 (không dùng link embed)
+      const isDirectVideo = /\.(m3u8|mp4|webm|ogg|mov)(\?|$)/i.test(url);
+      if (!url || !isDirectVideo) return;
+      room.playlist = room.playlist || [];
+      room.playlist.push({ url, title });
+      if (addAndPlay) {
+        room.playIndex = room.playlist.length - 1;
+        room.videoUrl = url;
+        room.movieTitle = title || 'Phim';
+        room.currentTime = 0;
+        room.playing = false;
       }
+      io.to(code).emit('room-state', sanitizeRoomState(room));
     });
 
     socket.on('playlist-play', (data) => {
@@ -303,21 +316,21 @@ export function registerWatchParty(io) {
       if (!code) return;
       const room = rooms.get(code);
       if (!room) return;
-      if (socket.id !== room.hostSocketId) return;
       const index = parseInt(data?.index, 10);
-      if (!Number.isNaN(index) && room.playlist && room.playlist[index]) {
-        room.playIndex = index;
-        room.videoUrl = room.playlist[index].url;
-        room.movieTitle = room.playlist[index].title || 'Phim';
-        room.currentTime = 0;
-        room.playing = false;
-        room.messages.push({
-          id: Date.now() + '-' + Math.random().toString(36).slice(2),
-          type: 'system',
-          payload: 'Video đã đồng bộ',
-        });
-        io.to(code).emit('room-state', sanitizeRoomState(room));
-      }
+      if (Number.isNaN(index) || !room.playlist || !room.playlist[index]) return;
+      const item = room.playlist[index];
+      if (!item?.url || !/\.(m3u8|mp4|webm|ogg|mov)(\?|$)/i.test(item.url)) return;
+      room.playIndex = index;
+      room.videoUrl = item.url;
+      room.movieTitle = item.title || 'Phim';
+      room.currentTime = 0;
+      room.playing = false;
+      room.messages.push({
+        id: Date.now() + '-' + Math.random().toString(36).slice(2),
+        type: 'system',
+        payload: 'Video đã đồng bộ',
+      });
+      io.to(code).emit('room-state', sanitizeRoomState(room));
     });
 
     socket.on('sync-settings', (data) => {

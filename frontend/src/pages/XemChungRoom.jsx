@@ -174,9 +174,9 @@ export default function XemChungRoom() {
   }, [room?.videoUrl, syncEnabled, syncVideoToRoom]);
 
   const openAddPlaylistModal = () => setAddPlaylistModalOpen(true);
-  const handleAddToPlaylist = (url, title) => {
+  const handleAddToPlaylist = (url, title, addAndPlay = false) => {
     if (url && socketRef.current) {
-      socketRef.current.emit('playlist-add', { url, title: title || 'Phim' });
+      socketRef.current.emit('playlist-add', { url, title: title || 'Phim', addAndPlay: !!addAndPlay });
     }
   };
 
@@ -327,6 +327,7 @@ export default function XemChungRoom() {
                 />
               ) : (
                 <VideoPlayer
+                  key={videoUrl}
                   src={videoUrl}
                   videoRef={videoRef}
                   containerRef={playerWrapRef}

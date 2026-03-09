@@ -627,20 +627,21 @@ export default function VideoPlayer({
                     type="button"
                     className="watch-ctrl-btn"
                     onClick={(e) => { e.stopPropagation(); setOpenMenu(openMenu === 'server' ? null : 'server'); }}
+                    onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); setOpenMenu(openMenu === 'server' ? null : 'server'); }}
                     title="Chọn máy chủ"
                   >
                     <i className="fas fa-server" />
                   </button>
-                  <div className={`watch-ctrl-menu ${openMenu === 'server' ? 'open' : ''}`} onClick={(e) => e.stopPropagation()}>
+                  <div className={`watch-ctrl-menu ${openMenu === 'server' ? 'open' : ''}`} onClick={(e) => e.stopPropagation()} onTouchEnd={(e) => e.stopPropagation()}>
                     <div className="watch-ctrl-menu-title">Máy chủ</div>
                     {sources.map((s, i) => (
                       <div
                         key={i}
+                        role="button"
+                        tabIndex={0}
                         className={`watch-ctrl-menu-item ${sourceIndex === i ? 'active' : ''}`}
-                        onClick={() => {
-                          setSourceIndex(i);
-                          setOpenMenu(null);
-                        }}
+                        onClick={() => { setSourceIndex(i); setOpenMenu(null); }}
+                        onTouchEnd={(e) => { e.preventDefault(); setSourceIndex(i); setOpenMenu(null); }}
                       >
                         {s.label || `Server ${i + 1}`}
                       </div>
@@ -655,20 +656,30 @@ export default function VideoPlayer({
                     type="button"
                     className="watch-ctrl-btn"
                     onClick={(e) => { e.stopPropagation(); setOpenMenu(openMenu === 'quality' ? null : 'quality'); }}
+                    onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); setOpenMenu(openMenu === 'quality' ? null : 'quality'); }}
                     title="Chất lượng"
                   >
                     <i className="fas fa-display" />
                   </button>
-                  <div className={`watch-ctrl-menu ${openMenu === 'quality' ? 'open' : ''}`} onClick={(e) => e.stopPropagation()}>
+                  <div className={`watch-ctrl-menu ${openMenu === 'quality' ? 'open' : ''}`} onClick={(e) => e.stopPropagation()} onTouchEnd={(e) => e.stopPropagation()}>
                     <div className="watch-ctrl-menu-title">Chất lượng HLS</div>
-                    <div className={`watch-ctrl-menu-item ${qualityLevel === -1 ? 'active' : ''}`} onClick={() => setQuality(-1)}>
+                    <div
+                      role="button"
+                      tabIndex={0}
+                      className={`watch-ctrl-menu-item ${qualityLevel === -1 ? 'active' : ''}`}
+                      onClick={() => { setQuality(-1); setOpenMenu(null); }}
+                      onTouchEnd={(e) => { e.preventDefault(); setQuality(-1); setOpenMenu(null); }}
+                    >
                       Tự động
                     </div>
                     {qualityLevels.map((lev, i) => (
                       <div
                         key={i}
+                        role="button"
+                        tabIndex={0}
                         className={`watch-ctrl-menu-item ${qualityLevel === i ? 'active' : ''}`}
-                        onClick={() => setQuality(i)}
+                        onClick={() => { setQuality(i); setOpenMenu(null); }}
+                        onTouchEnd={(e) => { e.preventDefault(); setQuality(i); setOpenMenu(null); }}
                       >
                         {getQualityLabel(lev.height)}
                       </div>
@@ -682,20 +693,21 @@ export default function VideoPlayer({
                   type="button"
                   className="watch-ctrl-btn"
                   onClick={(e) => { e.stopPropagation(); setOpenMenu(openMenu === 'speed' ? null : 'speed'); }}
+                  onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); setOpenMenu(openMenu === 'speed' ? null : 'speed'); }}
                   title="Tốc độ"
                 >
                   <i className="fas fa-gauge-high" />
                 </button>
-                <div className={`watch-ctrl-menu ${openMenu === 'speed' ? 'open' : ''}`} onClick={(e) => e.stopPropagation()}>
+                <div className={`watch-ctrl-menu ${openMenu === 'speed' ? 'open' : ''}`} onClick={(e) => e.stopPropagation()} onTouchEnd={(e) => e.stopPropagation()}>
                   <div className="watch-ctrl-menu-title">Tốc độ phát</div>
                   {SPEEDS.map((r) => (
                     <div
                       key={r}
+                      role="button"
+                      tabIndex={0}
                       className={`watch-ctrl-menu-item ${playbackRate === r ? 'active' : ''}`}
-                      onClick={() => {
-                        setPlaybackRate(r);
-                        setOpenMenu(null);
-                      }}
+                      onClick={() => { setPlaybackRate(r); setOpenMenu(null); }}
+                      onTouchEnd={(e) => { e.preventDefault(); setPlaybackRate(r); setOpenMenu(null); }}
                     >
                       {r}× {r === 1 ? '(bình thường)' : ''}
                     </div>
@@ -704,7 +716,13 @@ export default function VideoPlayer({
               </div>
 
               {subtitles.length > 0 && (
-                <button type="button" className="watch-ctrl-btn" onClick={toggleSubtitle} title="Phụ đề">
+                <button
+                  type="button"
+                  className="watch-ctrl-btn"
+                  onClick={toggleSubtitle}
+                  onTouchEnd={(e) => { e.preventDefault(); toggleSubtitle(); }}
+                  title="Phụ đề"
+                >
                   <i className="fas fa-closed-captioning" />
                 </button>
               )}

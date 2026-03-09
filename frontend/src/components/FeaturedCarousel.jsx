@@ -10,22 +10,23 @@ const PLACEHOLDER_BG = NO_POSTER_DATA_URL;
 const FEATURED_MAX = 10;
 const DESC_MAX_LENGTH = 220;
 
-/** Backdrop cho nền full màn hình (ưu tiên backdrop, fallback poster). */
+/** Nền hero: Ophim = poster; KKPhim = thumb. */
 function getBackdropUrl(movie) {
   if (!movie) return null;
-  return movie.backdrop || movie.poster || movie.thumbnail;
+  if (movie.source === 'ophim') return movie.poster || movie.thumbnail || movie.backdrop;
+  return movie.thumbnail || movie.backdrop || movie.poster;
 }
 
-/** Poster cho thẻ bên phải — luôn dùng poster (poster_url từ nguồn), fallback thumbnail/backdrop. */
+/** Thẻ poster bên phải: Ophim = thumb; KKPhim = poster. */
 function getFeaturedPosterUrl(movie) {
   if (!movie) return null;
+  if (movie.source === 'ophim') return movie.thumbnail || movie.poster || movie.backdrop;
   return movie.poster_url || movie.poster || movie.thumbnail || movie.backdrop;
 }
 
-/** Ảnh dùng chung (thumbnail/poster) cho các chỗ khác nếu cần. */
+/** Ảnh dùng chung khi cần: Ophim = poster (hero) / thumb (card) tùy ngữ cảnh; KKPhim = thumb (hero) / poster (card). */
 function getFeaturedImage(movie) {
   if (!movie) return null;
-  if (movie.source === 'ophim') return movie.poster || movie.thumbnail || movie.backdrop;
   return movie.thumbnail || movie.poster || movie.backdrop;
 }
 

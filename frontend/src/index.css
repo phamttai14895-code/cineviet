@@ -10737,7 +10737,7 @@
 .watch-ctrl-menu-item.active { color: var(--accent); }
 .watch-ctrl-menu-item.active::after { content: '✓'; font-size: 0.8rem; }
 
-/* Mobile: đảm bảo hàng nút không cắt nút fullscreen — cuộn ngang hàng điều khiển */
+/* Mobile: đảm bảo hàng nút không cắt nút fullscreen — cuộn ngang hàng điều khiển; touch targets + touch-action để nút chất lượng/phụ đề nhận chạm */
 @media (max-width: 768px) {
   .watch-controls-overlay {
     padding-left: var(--space-sm);
@@ -10749,6 +10749,7 @@
     -webkit-overflow-scrolling: touch;
     min-width: min-content;
     flex-wrap: nowrap;
+    touch-action: pan-x;
   }
   .watch-controls-row,
   .watch-controls-right {
@@ -10756,6 +10757,14 @@
   }
   .watch-ctrl-btn {
     flex-shrink: 0;
+    min-width: 44px;
+    min-height: 44px;
+    touch-action: manipulation;
+  }
+  .watch-ctrl-menu-item {
+    min-height: 44px;
+    padding: 0.65rem 0.9rem;
+    touch-action: manipulation;
   }
 }
 

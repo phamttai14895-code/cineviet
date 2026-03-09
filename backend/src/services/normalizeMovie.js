@@ -473,6 +473,46 @@ function listToGenres(category, kind) {
 }
 
 /**
+ * Merge danh sách episodes: ưu tiên primary (KKPhim); với từng tập, ưu tiên link_m3u8/link_embed của primary, thiếu mới lấy từ secondary.
+ */
+export function mergeEpisodesPreferPrimaryLinks(primaryEpisodes, secondaryEpisodes) {
+  const primary = Array.isArray(primaryEpisodes) ? primaryEpisodes : [];
+  const secondary = Array.isArray(secondaryEpisodes) ? secondaryEpisodes : [];
+  const result = [];
+  const primaryServerNames = new Set(primary.map((e) => e.server_name));
+
+  for (const ep of primary) {
+    const serverName = ep.server_name || 'Nguồn';
+    const sec = secondary.find((e) => (e.server_name || 'Nguồn') === serverName);
+    const pData = Array.isArray(ep.server_data) ? ep.server_data : [];
+    const sData = sec && Array.isArray(sec.server_data) ? sec.server_data : [];
+    const maxLen = Math.max(pData.length, sData.length);
+    const serverData = [];
+    for (let i = 0; i < maxLen; i++) {
+      const p = pData[i] || {};
+      const s = sData[i] || {};
+      const link_m3u8 = (p.link_m3u8 && p.link_m3u8.trim()) ? p.link_m3u8.trim() : ((s.link_m3u8 && s.link_m3u8.trim()) ? s.link_m3u8.trim() : '');
+      const link_embed = (p.link_embed && p.link_embed.trim()) ? p.link_embed.trim() : ((s.link_embed && s.link_embed.trim()) ? s.link_embed.trim() : '');
+      serverData.push({
+        name: p.name ?? s.name ?? `Tập ${i + 1}`,
+        slug: p.slug ?? s.slug ?? String(i + 1),
+        link_embed: link_embed || '',
+        link_m3u8: link_m3u8 || '',
+      });
+    }
+    result.push({ server_name: serverName, server_data: serverData });
+  }
+
+  for (const ep of secondary) {
+    const serverName = ep.server_name || 'Nguồn';
+    if (primaryServerNames.has(serverName)) continue;
+    result.push(ep);
+  }
+
+  return result;
+}
+
+/**
  * Merge dữ liệu từ nhiều nguồn: ưu tiên primary, bổ sung từ secondary khi thiếu.
  */
 export function mergeMovieData(primary, ...secondaries) {

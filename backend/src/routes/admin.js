@@ -1080,7 +1080,7 @@ async function importMovieBySlug(slug, opts = {}) {
   const totalEpisodes = parseInt(crawled.total_episodes, 10) || 0;
   const episodeCurrent = crawled.episode_current != null ? Math.max(0, parseInt(crawled.episode_current, 10) || 0) : null;
   const duration = crawled.duration != null ? Math.max(0, parseInt(crawled.duration, 10) || 0) : 0;
-  const source = (crawled.source === 'phimapi') ? crawled.source : null;
+  const source = (crawled.source === 'phimapi' || crawled.source === 'ophim') ? crawled.source : null;
   const chieuRapVal = crawled.chieu_rap ?? crawled.chieuRap ?? crawled.chieurap;
   const chieuRap = (chieuRapVal === true || chieuRapVal === 1 || String(chieuRapVal).toLowerCase().trim() === 'true' || String(chieuRapVal).trim() === '1') ? 1 : 0;
   const thuyetMinh = (crawled.thuyet_minh === true || crawled.thuyet_minh === 1) ? 1 : 0;
@@ -1142,10 +1142,10 @@ router.post('/crawl/import', async (req, res) => {
   }
 });
 
-// Chạy crawl theo trang + lọc thể loại/quốc gia (KKPhim)
+// Chạy crawl theo trang + lọc thể loại/quốc gia — ưu tiên KKPhim (phimapi) trước, sau đó Ophim
 // API phim-moi-cap-nhat có thể có 1100+ trang (26k+ phim) — cần đủ để "crawl đến hết trang"
 const CRAWL_MAX_PAGES = 30000;
-const SOURCES = ['phimapi'];
+const SOURCES = ['phimapi', 'ophim'];
 
 function getCrawlAutoSettings() {
   const rows = db.prepare("SELECT key, value FROM settings WHERE key LIKE 'crawl_%'").all();

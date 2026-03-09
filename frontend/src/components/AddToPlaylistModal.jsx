@@ -126,35 +126,38 @@ export default function AddToPlaylistModal({ isOpen, onClose, onAdd }) {
   const serverData = currentServer?.server_data || [];
   const isPhimLe = !selectedMovie || (selectedMovie.type !== 'series' && selectedMovie.type !== 'anime') || (selectedMovie.total_episodes || 0) <= 1;
 
+  /** Xem chung chỉ dùng link m3u8 (không dùng link embed). */
   const getSelectedUrl = useCallback(() => {
     if (!selectedMovie) return null;
+    const m3u8OrDirect = (url) => {
+      if (!url || typeof url !== 'string') return null;
+      const u = url.trim();
+      if (!u) return null;
+      if (/\.m3u8(\?|$)/i.test(u) || /\.(mp4|webm|ogg|mov)(\?|$)/i.test(u)) return u;
+      return null;
+    };
     if (isPhimLe) {
-      const firstUrl = selectedMovie.video_url && /\.(m3u8|mp4|webm)/i.test(selectedMovie.video_url)
-        ? selectedMovie.video_url.trim()
-        : null;
+      const firstUrl = m3u8OrDirect(selectedMovie.video_url);
       if (firstUrl) return { url: firstUrl, title: toTitleCase(selectedMovie.title || 'Phim') };
       if (serverData.length > 0) {
-        const first = serverData[0];
-        const m3u8 = (first?.link_m3u8 || '').trim();
+        const m3u8 = (serverData[0]?.link_m3u8 || '').trim();
         if (m3u8) return { url: m3u8, title: toTitleCase(selectedMovie.title || 'Phim') };
       }
       return null;
     }
     const ep = serverData[episodeIndex] || serverData[String(episodeIndex + 1)] || serverData[String(episodeIndex)];
-    const link = ep?.link_m3u8?.trim() || ep?.link_embed?.trim();
-    if (!link) return null;
-    const isM3u8 = /\.m3u8|m3u8/i.test(link);
-    const url = isM3u8 ? link : link;
+    const m3u8 = (ep?.link_m3u8 || '').trim();
+    if (!m3u8) return null;
     const title = `${toTitleCase(selectedMovie.title || 'Phim')} - Tập ${episodeIndex + 1}`;
-    return { url, title };
+    return { url: m3u8, title };
   }, [selectedMovie, isPhimLe, serverData, episodeIndex]);
 
-  const handleAddToPlaylist = useCallback(async () => {
+  const handleAddToPlaylist = useCallback(async (playNow = false) => {
     const result = getSelectedUrl();
     if (!result || !onAdd) return;
     setAdding(true);
     try {
-      onAdd(result.url, result.title);
+      onAdd(result.url, result.title, playNow);
       onClose?.();
     } finally {
       setAdding(false);
@@ -276,7 +279,7 @@ export default function AddToPlaylistModal({ isOpen, onClose, onAdd }) {
                 <div className="watch-party-add-ep-info">
                   <p>Phim lẻ — sẽ thêm 1 mục (Full).</p>
                   {!getSelectedUrl() && (
-                    <p className="watch-party-add-error">Phim này chưa có link phát phù hợp (cần M3U8/MP4).</p>
+                    <p className="watch-party-add-error">Phim này chưa có link M3U8. Xem chung chỉ hỗ trợ link M3U8.</p>
                   )}
                 </div>
               ) : (
@@ -303,7 +306,7 @@ export default function AddToPlaylistModal({ isOpen, onClose, onAdd }) {
                       <p className="watch-party-add-error">Không có tập nào.</p>
                     )}
                     {serverData.map((ep, i) => {
-                      const link = ep?.link_m3u8?.trim() || ep?.link_embed?.trim();
+                      const hasM3u8 = (ep?.link_m3u8 || '').trim().length > 0;
                       const name = ep?.name || `Tập ${i + 1}`;
                       return (
                         <button
@@ -311,8 +314,8 @@ export default function AddToPlaylistModal({ isOpen, onClose, onAdd }) {
                           type="button"
                           className={`watch-party-add-ep-btn ${episodeIndex === i ? 'active' : ''}`}
                           onClick={() => setEpisodeIndex(i)}
-                          disabled={!link}
-                          title={!link ? 'Không có link' : name}
+                          disabled={!hasM3u8}
+                          title={!hasM3u8 ? 'Chưa có link M3U8' : name}
                         >
                           {name}
                         </button>
@@ -327,10 +330,18 @@ export default function AddToPlaylistModal({ isOpen, onClose, onAdd }) {
                   <button
                     type="button"
                     className="watch-party-btn watch-party-btn-primary"
-                    onClick={handleAddToPlaylist}
+                    onClick={() => handleAddToPlaylist(false)}
                     disabled={adding}
                   >
                     {adding ? <i className="fas fa-spinner fa-spin" /> : <i className="fas fa-plus" />} Thêm vào playlist
+                  </button>
+                  <button
+                    type="button"
+                    className="watch-party-btn watch-party-btn-ghost"
+                    onClick={() => handleAddToPlaylist(true)}
+                    disabled={adding}
+                  >
+                    {adding ? <i className="fas fa-spinner fa-spin" /> : <i className="fas fa-play" />} Thêm và phát ngay
                   </button>
                 </div>
               )}

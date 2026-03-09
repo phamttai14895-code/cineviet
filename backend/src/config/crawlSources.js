@@ -8,7 +8,7 @@ const PHIMAPI_BASE = 'https://phimapi.com';
 const NGUONC_BASE = 'https://phim.nguonc.com/api';
 
 export const ophim = {
-  home: () => `${OPROM_BASE}/home`,
+  home: (page = 1) => `${OPROM_BASE}/home?page=${page}`,
   search: (keyword) => `${OPROM_BASE}/tim-kiem?keyword=${encodeURIComponent(keyword)}`,
   theLoai: () => `${OPROM_BASE}/the-loai`,
   quocGia: () => `${OPROM_BASE}/quoc-gia`,
