@@ -290,7 +290,7 @@ export default function Header() {
         </button>
         <div className="header-mobile-center">
           {!mobileSearchOpen && (
-            <Link to="/" className="logo" onClick={() => setMobileMenuOpen(false)}>
+            <Link to="/" className="header-mobile-center-link logo" onClick={() => setMobileMenuOpen(false)} aria-label="Về trang chủ">
               <CineVietLogo variant="header" />
             </Link>
           )}

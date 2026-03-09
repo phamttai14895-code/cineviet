@@ -506,17 +506,20 @@ export default function Watch() {
   useEffect(() => {
     const c = containerRef.current;
     if (!c) return;
-    const onMove = () => {
+    const showControlsAndResetTimer = () => {
       setShowControls(true);
       if (controlsHideRef.current) clearTimeout(controlsHideRef.current);
       controlsHideRef.current = setTimeout(() => setShowControls(false), 3000);
     };
     const onLeave = () => setShowControls(false);
-    c.addEventListener('mousemove', onMove);
+    c.addEventListener('mousemove', showControlsAndResetTimer);
     c.addEventListener('mouseleave', onLeave);
+    /* Mobile: tap/chạm vào player để hiện thanh điều khiển (touch không fire mousemove) */
+    c.addEventListener('touchstart', showControlsAndResetTimer, { passive: true });
     return () => {
-      c.removeEventListener('mousemove', onMove);
+      c.removeEventListener('mousemove', showControlsAndResetTimer);
       c.removeEventListener('mouseleave', onLeave);
+      c.removeEventListener('touchstart', showControlsAndResetTimer);
       if (controlsHideRef.current) clearTimeout(controlsHideRef.current);
     };
   }, [movie?.id]);

@@ -802,6 +802,21 @@
     width: 100%;
     padding: 0;
   }
+  /* Link về trang chủ: phủ toàn bộ ô giữa (từ menu tới search) để ấn chữ CINEVIET hoặc vùng giữa đều về trang chủ */
+  .header-mobile-center-link {
+    pointer-events: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 44px;
+    padding: 0 var(--space-sm);
+  }
+  /* Cho click xuyên qua logo (chữ có -webkit-text-fill-color: transparent dễ không nhận click trên mobile) → Link cha nhận hết */
+  .header-mobile-center-link .cineviet-logo,
+  .header-mobile-center-link .cineviet-logo * {
+    pointer-events: none;
+  }
   .header-mobile-center .logo {
     pointer-events: auto;
     letter-spacing: 0.12em;
@@ -10155,6 +10170,7 @@
   min-height: 0;
 }
 
+.watch-player-wrap.show-controls .watch-controls-overlay,
 .watch-player.show-controls .watch-controls-overlay {
   opacity: 1;
 }
@@ -10479,6 +10495,7 @@
   pointer-events: none;
 }
 .watch-player-wrap:hover .watch-controls-overlay,
+.watch-player-wrap.show-controls .watch-controls-overlay,
 .watch-player.show-controls .watch-controls-overlay {
   opacity: 1;
   pointer-events: auto;
